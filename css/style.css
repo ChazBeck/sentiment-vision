@@ -1,0 +1,286 @@
+/**
+ * Sentiment Vision - Veerless Brand Styles
+ * Based on Veerless brand guidelines.
+ * Backup of original: backup/css/style.css
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap');
+
+/* ================================================================= */
+/* CSS CUSTOM PROPERTIES                                              */
+/* ================================================================= */
+:root {
+    --brand-navy: #043546;
+    --brand-aqua: #00434F;
+    --brand-forest: #415649;
+    --brand-sunrise: #E58325;
+    --brand-lavender: #696477;
+    --brand-sand: #CAC1A9;
+    --brand-darkest-sand: #736547;
+
+    --pastel-navy: #D7E5EF;
+    --pastel-aqua: #DBEDE9;
+    --pastel-lavender: #C2BFCA;
+    --pastel-forest: #CCD8D1;
+    --pastel-sand: #ECE9E1;
+    --pastel-sunrise: #F8E0C8;
+
+    --primary-color: #E58325;
+    --primary-hover: #d16a1d;
+    --secondary-color: #9ca3af;
+    --secondary-hover: #6b7280;
+
+    --bg-color: #f9fafb;
+    --card-bg: #ffffff;
+    --border-color: #e5e7eb;
+    --input-border: #d1d5db;
+
+    --text-primary: #043546;
+    --text-secondary: #6c757d;
+    --text-body: #333;
+    --text-white: #ffffff;
+
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ================================================================= */
+/* RESET & BASE                                                       */
+/* ================================================================= */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--bg-color);
+    color: var(--text-body);
+    line-height: 1.4;
+}
+a { color: var(--primary-color); text-decoration: none; }
+a:hover { text-decoration: underline; color: var(--primary-hover); }
+
+/* ================================================================= */
+/* SUB-NAV BAR (below external auth header)                            */
+/* ================================================================= */
+.sub-nav-wrap {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border-color);
+}
+.sub-nav {
+    display: flex;
+    align-items: center;
+    height: 44px;
+    gap: 2px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+.sub-nav a {
+    padding: 0 1.25rem;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.sub-nav a:hover {
+    color: var(--brand-navy);
+    background: rgba(4, 53, 70, 0.04);
+    text-decoration: none;
+}
+.sub-nav a.active {
+    color: var(--brand-navy);
+    font-weight: 600;
+    border-bottom-color: var(--brand-sunrise);
+}
+
+/* ================================================================= */
+/* MAIN CONTENT AREA                                                   */
+/* ================================================================= */
+.page-bg {
+    min-height: calc(100vh - 44px - 60px);
+    background: #ffffff;
+    padding: 30px 20px 40px;
+}
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+.content-card {
+    background: rgba(255, 255, 255, 0.97);
+    border-radius: 8px;
+    box-shadow: var(--shadow-card);
+    padding: 40px 44px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+.content-card.wide {
+    max-width: 1200px;
+}
+
+/* ================================================================= */
+/* FOOTER                                                              */
+/* ================================================================= */
+footer {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-family: 'Poppins', sans-serif;
+    background: var(--card-bg);
+    border-top: 1px solid var(--border-color);
+}
+
+/* ================================================================= */
+/* HEADINGS                                                            */
+/* ================================================================= */
+h1, h2, h3, h4 {
+    font-family: 'Archivo', 'Arial', sans-serif;
+    color: var(--text-primary);
+}
+h2 { font-size: 22px; font-weight: 700; margin-bottom: 16px; }
+h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+p.hint, .hint { font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; }
+
+/* ================================================================= */
+/* ALERTS                                                              */
+/* ================================================================= */
+.alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; }
+.alert-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+.alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+.alert-info { background: var(--pastel-navy); color: var(--brand-navy); border: 1px solid #b8d4e8; }
+
+/* ================================================================= */
+/* CARDS                                                               */
+/* ================================================================= */
+.card {
+    background: var(--card-bg);
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    padding: 24px;
+    margin-bottom: 20px;
+}
+.card h2 { font-size: 18px; margin-bottom: 16px; }
+.card h3 { font-size: 15px; margin-bottom: 8px; }
+
+/* ================================================================= */
+/* FORMS                                                               */
+/* ================================================================= */
+.form-group { margin-bottom: 16px; }
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 4px;
+}
+.form-group .hint { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+
+.form-row { display: flex; gap: 16px; align-items: end; flex-wrap: wrap; }
+.form-row .form-group { flex: 1; min-width: 140px; }
+.form-row .form-group.narrow { flex: 0 0 auto; min-width: auto; }
+
+input[type=text], input[type=url], textarea, select {
+    width: 100%;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--input-border);
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+    background: var(--card-bg);
+}
+input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(229, 131, 37, 0.1);
+}
+textarea { resize: vertical; min-height: 100px; }
+input[type=color] {
+    width: 50px; height: 36px; padding: 2px;
+    border: 1px solid var(--input-border); border-radius: 4px; cursor: pointer;
+}
+
+.checkbox-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.checkbox-row input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--primary-color); }
+.checkbox-row label { font-size: 13px; color: #374151; font-weight: normal; }
+
+/* ================================================================= */
+/* BUTTONS                                                             */
+/* ================================================================= */
+.btn {
+    display: inline-block;
+    padding: 0.5rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s, color 0.2s;
+}
+.btn:hover { text-decoration: none; }
+.btn-primary { background: var(--primary-color); color: var(--text-white); }
+.btn-primary:hover { background: var(--primary-hover); color: var(--text-white); }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+.btn-outline {
+    background: var(--card-bg);
+    color: var(--brand-navy);
+    border: 1px solid var(--brand-navy);
+}
+.btn-outline:hover { background: var(--brand-navy); color: var(--text-white); }
+.btn-danger { background: var(--card-bg); color: #dc2626; border: 1px solid #fecaca; }
+.btn-danger:hover { background: #fee2e2; }
+.btn-link {
+    background: none; border: none;
+    color: var(--primary-color);
+    padding: 0; font-size: 13px; cursor: pointer;
+}
+.btn-link:hover { text-decoration: underline; }
+
+/* ================================================================= */
+/* ACCORDION                                                           */
+/* ================================================================= */
+.accordion-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+.accordion-body.open { max-height: 3000px; }
+
+/* ================================================================= */
+/* SHARED TAG PILLS & BADGES                                           */
+/* ================================================================= */
+.tag {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+}
+.tag-blue { background: var(--pastel-navy); color: var(--brand-navy); }
+.tag-amber { background: var(--pastel-sunrise); color: #92400e; }
+.tag-gray { background: #f1f5f9; color: #475569; }
+
+.badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.badge-green { background: #d4edda; color: #155724; }
+.badge-red { background: #f8d7da; color: #721c24; }
+.badge-gray { background: #f1f5f9; color: #475569; }
+.badge-yellow { background: #fff3cd; color: #856404; }
+
+/* ================================================================= */
+/* SECTION DIVIDER                                                     */
+/* ================================================================= */
+.section-divider {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: 32px 0;
+}

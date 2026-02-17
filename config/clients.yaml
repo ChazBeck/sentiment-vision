@@ -1,0 +1,43 @@
+clients:
+  - name: "Cologix"
+    industries:
+      - "Data Centers"
+      - "Colocation"
+    competitors:
+      - "Digital Edge"
+      - "Digital Real Estate"
+    sources:
+      - name: "Data Center Dynamics (DCD)"
+        type: rss
+        url: "https://www.datacenterdynamics.com/rss/"
+      - name: "Data Center Knowledge"
+        type: rss
+        url: "https://www.datacenterknowledge.com/rss.xml"
+      - name: "TechTarget SearchDataCenter"
+        type: rss
+        url: "https://www.techtarget.com/searchdatacenter/rss"
+      - name: "Google News - Cologix"
+        type: search
+        url: "https://news.google.com/rss/search?q=Cologix"
+  - name: "Janus International"
+    industries:
+      - "Self‑storage"
+      - "Storage"
+    competitors:
+      - "DBCI"
+      - "Betco"
+      - "Trachte"
+      - "Wayne Dalton"
+    sources:
+      - name: "Self Storage Units"
+        type: rss
+        url: "https://selfstorageunits.com/feed"
+      - name: "TMS Self Storage"
+        type: rss
+        url: "https://tmsselfstorage.com/feed"
+      - name: "Storeganise Blog RSS"
+        type: rss
+        url: "https://storeganise.com/blog/feed"
+      - name: "Google News - Janus International"
+        type: search
+        url: "https://news.google.com/rss/search?q=Janus+International"

@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sentiment Vision - Product Walkthrough</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; line-height: 1.6; }
+
+    /* Navigation */
+    .demo-nav {
+        position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+        background: rgba(15,23,42,0.95); backdrop-filter: blur(8px);
+        border-bottom: 1px solid #1e293b; padding: 12px 0;
+    }
+    .demo-nav-inner {
+        max-width: 1000px; margin: 0 auto; padding: 0 24px;
+        display: flex; align-items: center; justify-content: space-between;
+    }
+    .demo-nav-brand { font-size: 16px; font-weight: 700; color: #fff; }
+    .demo-nav-brand span { color: #3b82f6; }
+    .demo-nav-links { display: flex; gap: 6px; }
+    .demo-nav-links a {
+        padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500;
+        color: #94a3b8; text-decoration: none; transition: all 0.2s;
+    }
+    .demo-nav-links a:hover, .demo-nav-links a.active { color: #fff; background: #1e293b; }
+
+    /* Sections */
+    .section {
+        max-width: 1000px; margin: 0 auto; padding: 80px 24px 40px;
+    }
+    .section:first-of-type { padding-top: 100px; }
+    .section-divider {
+        max-width: 1000px; margin: 0 auto; padding: 0 24px;
+    }
+    .section-divider hr {
+        border: none; border-top: 1px solid #1e293b; margin: 20px 0;
+    }
+
+    /* Hero */
+    .hero { text-align: center; padding: 120px 24px 60px; }
+    .hero h1 { font-size: 48px; font-weight: 800; color: #fff; margin-bottom: 16px; letter-spacing: -1px; }
+    .hero h1 span { color: #3b82f6; }
+    .hero .subtitle { font-size: 20px; color: #94a3b8; max-width: 600px; margin: 0 auto 32px; }
+    .hero .date { font-size: 13px; color: #475569; }
+
+    /* Section headers */
+    .section-num {
+        display: inline-block; width: 32px; height: 32px; line-height: 32px; text-align: center;
+        background: #3b82f6; color: #fff; border-radius: 50%; font-size: 14px; font-weight: 700;
+        margin-bottom: 12px;
+    }
+    h2 { font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+    h3 { font-size: 20px; font-weight: 600; color: #f1f5f9; margin-bottom: 8px; }
+    .section-lead { font-size: 16px; color: #94a3b8; margin-bottom: 28px; max-width: 700px; }
+
+    /* Screenshot mockup frames */
+    .screenshot-frame {
+        background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+        overflow: hidden; margin: 24px 0;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+    }
+    .screenshot-titlebar {
+        background: #0f172a; padding: 10px 16px; display: flex; align-items: center; gap: 8px;
+        border-bottom: 1px solid #1e293b;
+    }
+    .screenshot-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .screenshot-dot.red { background: #ef4444; }
+    .screenshot-dot.yellow { background: #eab308; }
+    .screenshot-dot.green { background: #22c55e; }
+    .screenshot-url {
+        margin-left: 12px; background: #1e293b; padding: 4px 14px; border-radius: 6px;
+        font-size: 12px; color: #64748b; flex: 1;
+    }
+
+    .screenshot-body { padding: 24px; }
+
+    /* Mockup: Dashboard header */
+    .mock-header { background: #1e293b; padding: 12px 20px; border-radius: 8px 8px 0 0; display: flex; align-items: center; gap: 12px; }
+    .mock-header-title { font-size: 16px; font-weight: 700; color: #fff; }
+    .mock-nav-pill { padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; }
+    .mock-nav-active { background: #2563eb; color: #fff; }
+    .mock-nav-inactive { background: #334155; color: #94a3b8; }
+
+    /* Mockup: Tile grid */
+    .mock-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .mock-tile {
+        background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 20px;
+    }
+    .mock-tile-name { font-size: 16px; font-weight: 700; color: #f1f5f9; margin-bottom: 6px; }
+    .mock-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
+    .mock-tag {
+        display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600;
+    }
+    .mock-tag-blue { background: #1e3a5f; color: #60a5fa; }
+    .mock-tag-amber { background: #422006; color: #fbbf24; }
+
+    .mock-score { font-size: 32px; font-weight: 800; margin-bottom: 4px; }
+    .mock-score-label { font-size: 12px; font-weight: 600; margin-bottom: 10px; }
+    .mock-bar { display: flex; height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+    .mock-bar div { height: 100%; }
+    .mock-legend { display: flex; gap: 10px; font-size: 10px; color: #64748b; margin-bottom: 12px; }
+    .mock-legend span { display: flex; align-items: center; gap: 3px; }
+    .mock-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+
+    .mock-stats { display: flex; gap: 12px; font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 10px; }
+    .mock-stats strong { color: #cbd5e1; }
+    .mock-view-link { font-size: 12px; color: #3b82f6; margin-top: 10px; display: inline-block; }
+
+    /* Mockup: Gauges */
+    .mock-gauges { display: flex; gap: 14px; }
+    .mock-gauge-card {
+        flex: 1; background: #0f172a; border: 1px solid #334155; border-radius: 10px;
+        padding: 16px 12px; text-align: center;
+    }
+    .mock-gauge-title { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+    .mock-gauge-score { font-size: 24px; font-weight: 800; }
+    .mock-gauge-label { font-size: 11px; font-weight: 600; margin-top: 2px; }
+    .mock-gauge-detail { font-size: 10px; color: #475569; margin-top: 4px; }
+    .mock-gauge-breakdown { display: flex; justify-content: center; gap: 10px; margin-top: 6px; font-size: 10px; color: #64748b; }
+
+    /* Mockup: Tier toggles */
+    .mock-tier-row { display: flex; align-items: center; gap: 8px; margin: 14px 0; }
+    .mock-tier-label { font-size: 11px; font-weight: 600; color: #64748b; }
+    .mock-tier-btn {
+        padding: 4px 12px; border-radius: 14px; font-size: 11px; font-weight: 700;
+        border: 2px solid; cursor: default;
+    }
+    .mock-tier-1 { border-color: #7c3aed; background: #7c3aed; color: #fff; }
+    .mock-tier-2 { border-color: #2563eb; background: #2563eb; color: #fff; }
+    .mock-tier-3 { border-color: #059669; background: #059669; color: #fff; }
+    .mock-tier-4 { border-color: #d97706; background: #d97706; color: #fff; }
+
+    /* Mockup: Table */
+    .mock-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .mock-table th {
+        text-align: left; padding: 8px 10px; background: #0f172a; color: #64748b;
+        font-weight: 600; border-bottom: 1px solid #334155; font-size: 11px;
+    }
+    .mock-table td { padding: 8px 10px; border-bottom: 1px solid #1e293b; color: #cbd5e1; }
+    .mock-table tr:hover td { background: rgba(30,41,59,0.5); }
+    .mock-badge {
+        display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700;
+    }
+    .mock-badge-green { background: #052e16; color: #4ade80; }
+    .mock-badge-yellow { background: #422006; color: #fbbf24; }
+    .mock-badge-red { background: #450a0a; color: #f87171; }
+    .mock-badge-gray { background: #1e293b; color: #64748b; }
+
+    /* Callout / annotation boxes */
+    .callout {
+        background: #172554; border: 1px solid #1e40af; border-radius: 10px;
+        padding: 16px 20px; margin: 20px 0; position: relative;
+    }
+    .callout::before {
+        content: ''; position: absolute; left: -1px; top: 12px; bottom: 12px; width: 3px;
+        background: #3b82f6; border-radius: 2px;
+    }
+    .callout h4 { font-size: 14px; color: #60a5fa; margin-bottom: 6px; font-weight: 700; }
+    .callout p { font-size: 14px; color: #93c5fd; }
+
+    .callout-green { background: #052e16; border-color: #166534; }
+    .callout-green::before { background: #22c55e; }
+    .callout-green h4 { color: #4ade80; }
+    .callout-green p { color: #86efac; }
+
+    .callout-amber { background: #451a03; border-color: #92400e; }
+    .callout-amber::before { background: #f59e0b; }
+    .callout-amber h4 { color: #fbbf24; }
+    .callout-amber p { color: #fde68a; }
+
+    .callout-purple { background: #2e1065; border-color: #6d28d9; }
+    .callout-purple::before { background: #8b5cf6; }
+    .callout-purple h4 { color: #a78bfa; }
+    .callout-purple p { color: #c4b5fd; }
+
+    /* Weighting table */
+    .weight-table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    .weight-table th {
+        text-align: left; padding: 10px 14px; background: #1e293b; color: #94a3b8;
+        font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+        border-bottom: 2px solid #334155;
+    }
+    .weight-table td {
+        padding: 12px 14px; border-bottom: 1px solid #1e293b; font-size: 14px;
+    }
+    .weight-table tr:hover td { background: rgba(30,41,59,0.3); }
+    .weight-multiplier {
+        display: inline-block; padding: 3px 10px; border-radius: 6px;
+        font-weight: 800; font-size: 14px; min-width: 44px; text-align: center;
+    }
+
+    /* Flow diagram */
+    .flow { display: flex; align-items: center; gap: 0; margin: 24px 0; flex-wrap: wrap; justify-content: center; }
+    .flow-step {
+        background: #1e293b; border: 1px solid #334155; border-radius: 10px;
+        padding: 14px 18px; text-align: center; min-width: 140px;
+    }
+    .flow-step-label { font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
+    .flow-step-text { font-size: 13px; color: #e2e8f0; font-weight: 600; }
+    .flow-arrow { font-size: 20px; color: #334155; padding: 0 8px; }
+
+    /* Source list */
+    .source-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+    .source-card {
+        background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 14px 16px;
+        display: flex; align-items: start; gap: 12px;
+    }
+    .source-tier-badge {
+        display: inline-block; padding: 3px 8px; border-radius: 6px;
+        font-size: 10px; font-weight: 800; text-transform: uppercase; white-space: nowrap;
+    }
+    .source-name { font-size: 13px; font-weight: 600; color: #e2e8f0; }
+    .source-detail { font-size: 11px; color: #64748b; margin-top: 2px; }
+
+    /* Summary cards */
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 24px 0; }
+    .summary-card {
+        background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 20px; text-align: center;
+    }
+    .summary-card .num { font-size: 36px; font-weight: 800; color: #3b82f6; }
+    .summary-card .label { font-size: 13px; color: #94a3b8; margin-top: 4px; }
+
+    /* Annotation arrow mockup styling */
+    .annotated-area { position: relative; }
+    .annotation {
+        position: absolute; background: #fbbf24; color: #1e293b; font-size: 12px; font-weight: 700;
+        padding: 4px 10px; border-radius: 6px; white-space: nowrap; z-index: 10;
+    }
+
+    /* Utility */
+    .text-green { color: #4ade80; }
+    .text-yellow { color: #fbbf24; }
+    .text-red { color: #f87171; }
+    .text-blue { color: #60a5fa; }
+    .text-purple { color: #a78bfa; }
+    .text-muted { color: #64748b; }
+    .mt-4 { margin-top: 16px; }
+    .mt-8 { margin-top: 32px; }
+    .mb-4 { margin-bottom: 16px; }
+    .mb-6 { margin-bottom: 24px; }
+
+    /* Smooth scrolling */
+    html { scroll-behavior: smooth; }
+
+    /* Print styles */
+    @media print {
+        body { background: #fff; color: #1e293b; }
+        .demo-nav { display: none; }
+        .section { padding-top: 40px; }
+        .screenshot-frame { box-shadow: none; border: 2px solid #e2e8f0; }
+    }
+</style>
+</head>
+<body>
+
+<!-- Fixed Navigation -->
+<nav class="demo-nav">
+    <div class="demo-nav-inner">
+        <div class="demo-nav-brand">Sentiment <span>Vision</span></div>
+        <div class="demo-nav-links">
+            <a href="#overview">Overview</a>
+            <a href="#dashboard">Dashboard</a>
+            <a href="#cologix">Cologix Deep-Dive</a>
+            <a href="#weighting">Media Weighting</a>
+            <a href="#sources">Data Sources</a>
+            <a href="#architecture">How It Works</a>
+        </div>
+    </div>
+</nav>
+
+<!-- ================================================================== -->
+<!-- HERO -->
+<!-- ================================================================== -->
+<div class="hero" id="top">
+    <h1>Sentiment <span>Vision</span></h1>
+    <p class="subtitle">Automated media sentiment intelligence for multi-client brand monitoring. Know what the media is saying about your clients &mdash; and how much it matters.</p>
+    <p class="date">Product Walkthrough &middot; February 2026</p>
+</div>
+
+<!-- ================================================================== -->
+<!-- 1. PRODUCT OVERVIEW -->
+<!-- ================================================================== -->
+<div class="section" id="overview">
+    <span class="section-num">1</span>
+    <h2>What Is Sentiment Vision?</h2>
+    <p class="section-lead">
+        Sentiment Vision is a data intelligence tool that automatically collects news articles about our clients from dozens of media sources, extracts the content, and scores each article's sentiment. The result: a real-time picture of how the media landscape views each client, their industry, and their competitors.
+    </p>
+
+    <div class="summary-grid">
+        <div class="summary-card">
+            <div class="num">15</div>
+            <div class="label">Media Sources Monitored</div>
+        </div>
+        <div class="summary-card">
+            <div class="num">2</div>
+            <div class="label">Active Clients</div>
+        </div>
+        <div class="summary-card">
+            <div class="num">4</div>
+            <div class="label">Media Tiers Weighted</div>
+        </div>
+    </div>
+
+    <div class="callout">
+        <h4>The Core Idea</h4>
+        <p>Not all media coverage is created equal. A mention in Reuters carries more weight than a mention on a vendor blog. Sentiment Vision applies a <strong>tiered weighting system</strong> to ensure that high-authority sources have proportionally more influence on the overall sentiment score. This gives clients an accurate, signal-over-noise view of their media presence.</p>
+    </div>
+</div>
+
+<div class="section-divider"><hr></div>
+
+<!-- ================================================================== -->
+<!-- 2. DASHBOARD OVERVIEW -->
+<!-- ================================================================== -->
+<div class="section" id="dashboard">
+    <span class="section-num">2</span>
+    <h2>The Dashboard</h2>
+    <p class="section-lead">
+        The main dashboard gives an at-a-glance view of all clients. Each tile shows the client's weighted sentiment score, a positive/neutral/negative breakdown bar, and key stats.
+    </p>
+
+    <!-- Mockup: Dashboard -->
+    <div class="screenshot-frame">
+        <div class="screenshot-titlebar">
+            <span class="screenshot-dot red"></span>
+            <span class="screenshot-dot yellow"></span>
+            <span class="screenshot-dot green"></span>
+            <span class="screenshot-url">localhost/sentiment_vision/index.php</span>
+        </div>
+        <div class="screenshot-body">
+            <!-- Mock header -->
+            <div class="mock-header">
+                <div class="mock-header-title">Sentiment Vision</div>
+                <span class="mock-nav-pill mock-nav-active">Dashboard</span>
+                <span class="mock-nav-pill mock-nav-inactive">+ Client</span>
+            </div>
+            <div style="padding: 20px 0;">
+                <div class="mock-grid">
+                    <!-- Cologix tile -->
+                    <div class="mock-tile">
+                        <div class="mock-tile-name">Cologix</div>
+                        <div class="mock-tags">
+                            <span class="mock-tag mock-tag-blue">Data Centers</span>
+                            <span class="mock-tag mock-tag-blue">Colocation</span>
+                            <span class="mock-tag mock-tag-amber">Digital Edge</span>
+                            <span class="mock-tag mock-tag-amber">Digital Real Estate</span>
+                        </div>
+                        <div class="mock-score text-green">0.18</div>
+                        <div class="mock-score-label text-green">Neutral</div>
+                        <div class="mock-bar">
+                            <div style="width:42%; background:#22c55e;"></div>
+                            <div style="width:38%; background:#eab308;"></div>
+                            <div style="width:20%; background:#ef4444;"></div>
+                        </div>
+                        <div class="mock-legend">
+                            <span><span class="mock-dot" style="background:#22c55e;display:inline-block;width:6px;height:6px;border-radius:50%;"></span> 34 positive</span>
+                            <span><span class="mock-dot" style="background:#eab308;display:inline-block;width:6px;height:6px;border-radius:50%;"></span> 31 neutral</span>
+                            <span><span class="mock-dot" style="background:#ef4444;display:inline-block;width:6px;height:6px;border-radius:50%;"></span> 16 negative</span>
+                        </div>
+                        <div class="mock-stats">
+                            <span><strong>187</strong> articles</span>
+                            <span><strong>142</strong> with content</span>
+                            <span>Last fetch: <strong>Feb 11, 2:30pm</strong></span>
+                        </div>
+                        <span class="mock-view-link">View Details &rarr;</span>
+                    </div>
+                    <!-- Janus tile -->
+                    <div class="mock-tile">
+                        <div class="mock-tile-name">Janus International</div>
+                        <div class="mock-tags">
+                            <span class="mock-tag mock-tag-blue">Self-storage</span>
+                            <span class="mock-tag mock-tag-blue">Storage</span>
+                            <span class="mock-tag mock-tag-amber">DBCI</span>
+                            <span class="mock-tag mock-tag-amber">Betco</span>
+                            <span class="mock-tag mock-tag-amber">Trachte</span>
+                            <span class="mock-tag mock-tag-amber">Wayne Dalton</span>
+                        </div>
+                        <div class="mock-score text-yellow">0.08</div>
+                        <div class="mock-score-label text-yellow">Neutral</div>
+                        <div class="mock-bar">
+                            <div style="width:35%; background:#22c55e;"></div>
+                            <div style="width:42%; background:#eab308;"></div>
+                            <div style="width:23%; background:#ef4444;"></div>
+                        </div>
+                        <div class="mock-legend">
+                            <span><span class="mock-dot" style="background:#22c55e;display:inline-block;width:6px;height:6px;border-radius:50%;"></span> 28 positive</span>
+                            <span><span class="mock-dot" style="background:#eab308;display:inline-block;width:6px;height:6px;border-radius:50%;"></span> 33 neutral</span>
+                            <span><span class="mock-dot" style="background:#ef4444;display:inline-block;width:6px;height:6px;border-radius:50%;"></span> 18 negative</span>
+                        </div>
+                        <div class="mock-stats">
+                            <span><strong>153</strong> articles</span>
+                            <span><strong>118</strong> with content</span>
+                            <span>Last fetch: <strong>Feb 11, 2:30pm</strong></span>
+                        </div>
+                        <span class="mock-view-link">View Details &rarr;</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="callout">
+        <h4>Reading the Dashboard</h4>
+        <p><strong>The large number</strong> is the weighted sentiment score (-1.0 to +1.0). Green = positive, yellow = neutral, red = negative. <strong>The bar</strong> shows the ratio of positive, neutral, and negative articles. <strong>The stats row</strong> shows total articles collected, how many have full extracted content, and the last fetch time. All scores are <strong>weighted by media tier</strong> &mdash; a Reuters article influences the score 3x more than an industry trade publication.</p>
+    </div>
+</div>
+
+<div class="section-divider"><hr></div>
+
+<!-- ================================================================== -->
+<!-- 3. COLOGIX DEEP-DIVE -->
+<!-- ================================================================== -->
+<div class="section" id="cologix">
+    <span class="section-num">3</span>
+    <h2>Client Deep-Dive: Cologix</h2>
+    <p class="section-lead">
+        When you click into a client, you get three sentiment gauges, media tier filtering, and two article tables. Let's walk through what the Cologix view shows.
+    </p>
+
+    <h3 class="mt-4">Client Profile</h3>
+    <div class="source-grid mb-6">
+        <div class="source-card">
+            <div>
+                <div class="source-name">Industries Tracked</div>
+                <div class="source-detail" style="margin-top: 6px;">
+                    <span class="mock-tag mock-tag-blue" style="margin-right:4px;">Data Centers</span>
+                    <span class="mock-tag mock-tag-blue">Colocation</span>
+                </div>
+            </div>
+        </div>
+        <div class="source-card">
+            <div>
+                <div class="source-name">Competitors Tracked</div>
+                <div class="source-detail" style="margin-top: 6px;">
+                    <span class="mock-tag mock-tag-amber" style="margin-right:4px;">Digital Edge</span>
+                    <span class="mock-tag mock-tag-amber">Digital Real Estate</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mockup: Client Gauges -->
+    <h3>Three Sentiment Gauges</h3>
+    <p class="section-lead">Each gauge shows a different angle on sentiment, all weighted by media tier.</p>
+
+    <div class="screenshot-frame">
+        <div class="screenshot-titlebar">
+            <span class="screenshot-dot red"></span>
+            <span class="screenshot-dot yellow"></span>
+            <span class="screenshot-dot green"></span>
+            <span class="screenshot-url">localhost/sentiment_vision/client.php?id=1</span>
+        </div>
+        <div class="screenshot-body">
+            <div class="mock-header">
+                <div class="mock-header-title">Sentiment Vision</div>
+                <span style="color:#94a3b8;font-size:13px;margin-left:8px;">Cologix</span>
+                <div style="flex:1;"></div>
+                <span class="mock-nav-pill mock-nav-inactive">Dashboard</span>
+                <span class="mock-nav-pill mock-nav-inactive">+ Client</span>
+            </div>
+
+            <div style="padding: 20px 0;">
+                <!-- Client header -->
+                <div style="margin-bottom: 16px;">
+                    <div style="font-size: 20px; font-weight: 700; color: #f1f5f9;">Cologix</div>
+                    <div class="mock-tags" style="margin-top: 6px;">
+                        <span class="mock-tag mock-tag-blue">Data Centers</span>
+                        <span class="mock-tag mock-tag-blue">Colocation</span>
+                        <span class="mock-tag mock-tag-amber">Digital Edge</span>
+                        <span class="mock-tag mock-tag-amber">Digital Real Estate</span>
+                    </div>
+                </div>
+
+                <!-- Gauges -->
+                <div class="mock-gauges">
+                    <div class="mock-gauge-card">
+                        <div class="mock-gauge-title">Company Sentiment</div>
+                        <!-- SVG Gauge -->
+                        <svg viewBox="0 0 200 110" width="160" height="88" style="display:block;margin:0 auto;">
+                            <path d="M 18 100 A 82 82 0 0 1 182 100" fill="none" stroke="#334155" stroke-width="16" stroke-linecap="round"/>
+                            <path d="M 18 100 A 82 82 0 0 1 182 100" fill="none" stroke="#22c55e" stroke-width="16" stroke-linecap="round" stroke-dasharray="257.6" stroke-dashoffset="105"/>
+                            <g style="transform: rotate(16deg); transform-origin: 100px 100px;">
+                                <line x1="100" y1="100" x2="100" y2="30" stroke="#f1f5f9" stroke-width="2" stroke-linecap="round"/>
+                                <circle cx="100" cy="100" r="4" fill="#f1f5f9"/>
+                            </g>
+                            <text x="10" y="108" font-size="10" fill="#64748b" text-anchor="start">-1</text>
+                            <text x="100" y="16" font-size="10" fill="#64748b" text-anchor="middle">0</text>
+                            <text x="190" y="108" font-size="10" fill="#64748b" text-anchor="end">+1</text>
+                        </svg>
+                        <div class="mock-gauge-score text-green">0.18</div>
+                        <div class="mock-gauge-label text-green">Neutral-Positive</div>
+                        <div class="mock-gauge-detail">47 scored of 52 articles</div>
+                        <div class="mock-gauge-breakdown">
+                            <span><span class="mock-dot" style="background:#22c55e;display:inline-block;width:6px;height:6px;border-radius:50%;"></span> 22</span>
+                            <span><span class="mock-dot" style="background:#eab308;display:inline-block;width:6px;height:6px;border-radius:50%;"></span> 18</span>
+                            <span><span class="mock-dot" style="background:#ef4444;display:inline-block;width:6px;height:6px;border-radius:50%;"></span> 7</span>
+                        </div>
+                    </div>
+                    <div class="mock-gauge-card">
+                        <div class="mock-gauge-title">Industry Sentiment</div>
+                        <svg viewBox="0 0 200 110" width="160" height="88" style="display:block;margin:0 auto;">
+                            <path d="M 18 100 A 82 82 0 0 1 182 100" fill="none" stroke="#334155" stroke-width="16" stroke-linecap="round"/>
+                            <path d="M 18 100 A 82 82 0 0 1 182 100" fill="none" stroke="#eab308" stroke-width="16" stroke-linecap="round" stroke-dasharray="257.6" stroke-dashoffset="120"/>
+                            <g style="transform: rotate(5deg); transform-origin: 100px 100px;">
+                                <line x1="100" y1="100" x2="100" y2="30" stroke="#f1f5f9" stroke-width="2" stroke-linecap="round"/>
+                                <circle cx="100" cy="100" r="4" fill="#f1f5f9"/>
+                            </g>
+                            <text x="10" y="108" font-size="10" fill="#64748b" text-anchor="start">-1</text>
+                            <text x="100" y="16" font-size="10" fill="#64748b" text-anchor="middle">0</text>
+                            <text x="190" y="108" font-size="10" fill="#64748b" text-anchor="end">+1</text>
+                        </svg>
+                        <div class="mock-gauge-score text-yellow">0.06</div>
+                        <div class="mock-gauge-label text-yellow">Neutral</div>
+                        <div class="mock-gauge-detail">128 scored of 145 articles</div>
+                        <div class="mock-gauge-breakdown">
+                            <span><span class="mock-dot" style="background:#22c55e;display:inline-block;width:6px;height:6px;border-radius:50%;"></span> 48</span>
+                            <span><span class="mock-dot" style="background:#eab308;display:inline-block;width:6px;height:6px;border-radius:50%;"></span> 56</span>
+                            <span><span class="mock-dot" style="background:#ef4444;display:inline-block;width:6px;height:6px;border-radius:50%;"></span> 24</span>
+                        </div>
+                    </div>
+                    <div class="mock-gauge-card">
+                        <div class="mock-gauge-title">Competitor Sentiment</div>
+                        <svg viewBox="0 0 200 110" width="160" height="88" style="display:block;margin:0 auto;">
+                            <path d="M 18 100 A 82 82 0 0 1 182 100" fill="none" stroke="#334155" stroke-width="16" stroke-linecap="round"/>
+                            <path d="M 18 100 A 82 82 0 0 1 182 100" fill="none" stroke="#eab308" stroke-width="16" stroke-linecap="round" stroke-dasharray="257.6" stroke-dashoffset="130"/>
+                            <g style="transform: rotate(-2deg); transform-origin: 100px 100px;">
+                                <line x1="100" y1="100" x2="100" y2="30" stroke="#f1f5f9" stroke-width="2" stroke-linecap="round"/>
+                                <circle cx="100" cy="100" r="4" fill="#f1f5f9"/>
+                            </g>
+                            <text x="10" y="108" font-size="10" fill="#64748b" text-anchor="start">-1</text>
+                            <text x="100" y="16" font-size="10" fill="#64748b" text-anchor="middle">0</text>
+                            <text x="190" y="108" font-size="10" fill="#64748b" text-anchor="end">+1</text>
+                        </svg>
+                        <div class="mock-gauge-score text-yellow">-0.02</div>
+                        <div class="mock-gauge-label text-yellow">Neutral</div>
+                        <div class="mock-gauge-detail">35 scored of 41 articles</div>
+                        <div class="mock-gauge-breakdown">
+                            <span><span class="mock-dot" style="background:#22c55e;display:inline-block;width:6px;height:6px;border-radius:50%;"></span> 12</span>
+                            <span><span class="mock-dot" style="background:#eab308;display:inline-block;width:6px;height:6px;border-radius:50%;"></span> 15</span>
+                            <span><span class="mock-dot" style="background:#ef4444;display:inline-block;width:6px;height:6px;border-radius:50%;"></span> 8</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tier toggles -->
+                <div class="mock-tier-row">
+                    <span class="mock-tier-label">Media Tier:</span>
+                    <span class="mock-tier-btn mock-tier-1">T1 National</span>
+                    <span class="mock-tier-btn mock-tier-2">T2 Business</span>
+                    <span class="mock-tier-btn mock-tier-3">T3 Industry</span>
+                    <span class="mock-tier-btn mock-tier-4">T4 Vendor</span>
+                </div>
+
+                <!-- Article table snippet -->
+                <div style="font-size: 14px; font-weight: 600; color: #f1f5f9; margin: 14px 0 8px;">Client Articles <span style="color:#64748b;font-weight:400;">(52)</span></div>
+                <table class="mock-table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Source</th>
+                            <th>Words</th>
+                            <th>Sentiment</th>
+                            <th>Published</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="text-blue" style="font-weight:500;">Cologix Expands Montreal Campus With New Hyperscale Facility</span></td>
+                            <td style="color:#64748b;">Data Center Knowledge</td>
+                            <td>1,240</td>
+                            <td><span class="mock-badge mock-badge-green">0.42</span></td>
+                            <td style="color:#64748b;">Feb 10, 2026</td>
+                            <td><span class="mock-badge mock-badge-green">Content</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="text-blue" style="font-weight:500;">Data Center Market Faces Power Constraints Amid AI Boom</span></td>
+                            <td style="color:#64748b;">Reuters via Google News</td>
+                            <td>890</td>
+                            <td><span class="mock-badge mock-badge-yellow">0.05</span></td>
+                            <td style="color:#64748b;">Feb 9, 2026</td>
+                            <td><span class="mock-badge mock-badge-green">Content</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="text-blue" style="font-weight:500;">Cologix CEO on Sustainability Goals and Grid Challenges</span></td>
+                            <td style="color:#64748b;">Data Center Dynamics</td>
+                            <td>2,100</td>
+                            <td><span class="mock-badge mock-badge-green">0.31</span></td>
+                            <td style="color:#64748b;">Feb 7, 2026</td>
+                            <td><span class="mock-badge mock-badge-green">Content</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="text-blue" style="font-weight:500;">Colocation Pricing Pressures Expected to Ease in Q2</span></td>
+                            <td style="color:#64748b;">TechCrunch</td>
+                            <td>650</td>
+                            <td><span class="mock-badge mock-badge-yellow">0.12</span></td>
+                            <td style="color:#64748b;">Feb 5, 2026</td>
+                            <td><span class="mock-badge mock-badge-green">Content</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="text-blue" style="font-weight:500;">Digital Edge Announces Singapore Expansion Plans</span></td>
+                            <td style="color:#64748b;">Bloomberg via Google News</td>
+                            <td>780</td>
+                            <td><span class="mock-badge mock-badge-green">0.28</span></td>
+                            <td style="color:#64748b;">Feb 4, 2026</td>
+                            <td><span class="mock-badge mock-badge-green">Content</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="callout">
+        <h4>Understanding the Three Gauges</h4>
+        <p><strong>Company Sentiment</strong> &mdash; Only articles that directly mention "Cologix" by name. This is the clearest signal of how the media views the brand specifically.<br><br>
+        <strong>Industry Sentiment</strong> &mdash; Articles matching any tracked industry keyword ("Data Centers", "Colocation"). This shows the overall mood of the sector Cologix operates in.<br><br>
+        <strong>Competitor Sentiment</strong> &mdash; Articles mentioning tracked competitors (Digital Edge, Digital Real Estate). This helps benchmark: if competitors are getting more negative press, that's context for Cologix's relative position.</p>
+    </div>
+
+    <div class="callout-green callout">
+        <h4>What the Tier Toggle Buttons Do</h4>
+        <p>Those colored buttons (T1 National, T2 Business, T3 Industry, T4 Vendor) are live filters. Click to toggle tiers on/off &mdash; the gauges and article tables update in real-time. This lets you ask questions like: "What's our sentiment if we only look at Tier 1 national media?" or "How does industry trade press view us vs. business press?"</p>
+    </div>
+</div>
+
+<div class="section-divider"><hr></div>
+
+<!-- ================================================================== -->
+<!-- 4. MEDIA TIER WEIGHTING (THE IMPORTANT ONE) -->
+<!-- ================================================================== -->
+<div class="section" id="weighting">
+    <span class="section-num">4</span>
+    <h2>Media Tier Weighting: Why It Matters</h2>
+    <p class="section-lead">
+        This is the core differentiator. Not all media mentions are equal. A story in the New York Times has a different reach and credibility than a vendor marketing blog. Our weighting system ensures sentiment scores reflect this reality.
+    </p>
+
+    <h3>The Four Tiers</h3>
+
+    <table class="weight-table">
+        <thead>
+            <tr>
+                <th>Tier</th>
+                <th>Category</th>
+                <th>Weight</th>
+                <th>Example Sources</th>
+                <th>Rationale</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><span class="weight-multiplier" style="background:#7c3aed;color:#fff;">T1</span></td>
+                <td style="font-weight:600; color:#fff;">National / International Media</td>
+                <td><span style="font-size:20px;font-weight:800;color:#a78bfa;">3.0x</span></td>
+                <td>Reuters, AP News, NPR, BBC, NYT</td>
+                <td>Highest authority and reach. A mention here moves markets and shapes public perception. These sources have the largest readership and strongest editorial standards.</td>
+            </tr>
+            <tr>
+                <td><span class="weight-multiplier" style="background:#2563eb;color:#fff;">T2</span></td>
+                <td style="font-weight:600; color:#fff;">Business / Tech Press</td>
+                <td><span style="font-size:20px;font-weight:800;color:#60a5fa;">2.0x</span></td>
+                <td>TechCrunch, CNBC, Bloomberg, Ars Technica, The Verge</td>
+                <td>High authority within business and tech audiences. Decision-makers, investors, and industry leaders read these. Strong editorial standards, significant reach in B2B.</td>
+            </tr>
+            <tr>
+                <td><span class="weight-multiplier" style="background:#059669;color:#fff;">T3</span></td>
+                <td style="font-weight:600; color:#fff;">Industry Trade Publications</td>
+                <td><span style="font-size:20px;font-weight:800;color:#34d399;">1.0x</span></td>
+                <td>Data Center Dynamics, Data Center Knowledge, TechTarget</td>
+                <td>Baseline weight. These are the specialized publications read by industry professionals. Highly relevant but narrower audience. This is the default tier for client-specific sources.</td>
+            </tr>
+            <tr>
+                <td><span class="weight-multiplier" style="background:#d97706;color:#fff;">T4</span></td>
+                <td style="font-weight:600; color:#fff;">Vendor / Marketing Content</td>
+                <td><span style="font-size:20px;font-weight:800;color:#fbbf24;">0.5x</span></td>
+                <td>Company blogs, sponsored content, press releases</td>
+                <td>Half weight. This content is often promotional or self-published. It's worth tracking for completeness, but should not drive the overall sentiment score.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="callout-purple callout">
+        <h4>How the Weighted Score Is Calculated</h4>
+        <p>The formula: <strong>Weighted Sentiment = Sum(score x weight) / Sum(weight)</strong><br><br>
+        Example with 3 articles:<br>
+        &bull; Reuters article (T1, weight 3.0) with sentiment +0.4 &rarr; contributes 1.2<br>
+        &bull; TechCrunch article (T2, weight 2.0) with sentiment -0.1 &rarr; contributes -0.2<br>
+        &bull; DCD article (T3, weight 1.0) with sentiment +0.3 &rarr; contributes 0.3<br><br>
+        Weighted avg = (1.2 + -0.2 + 0.3) / (3.0 + 2.0 + 1.0) = <strong>1.3 / 6.0 = 0.217</strong> (Positive)<br><br>
+        Without weighting, the simple average would be (0.4 + -0.1 + 0.3) / 3 = 0.2. The weighted version better reflects reality: the positive Reuters coverage should carry more influence than the slightly negative TechCrunch piece.</p>
+    </div>
+
+    <div class="callout-amber callout">
+        <h4>Why These Specific Weights?</h4>
+        <p><strong>T1 at 3x</strong> &mdash; National media shapes public narrative. An AP wire story gets picked up by hundreds of local outlets. One Reuters article may reach more people than 50 trade articles combined.<br><br>
+        <strong>T2 at 2x</strong> &mdash; Business press reaches decision-makers, investors, and partners. Coverage here directly impacts how the business community perceives a client.<br><br>
+        <strong>T3 at 1x (baseline)</strong> &mdash; Industry trades are the core audience who already knows the client. Important for monitoring but represents a narrower, already-engaged audience.<br><br>
+        <strong>T4 at 0.5x</strong> &mdash; Vendor content is inherently biased toward the publisher. Including it at half-weight prevents promotional content from inflating sentiment while still tracking it.<br><br>
+        These weights are configurable in <code>settings.yaml</code> and can be adjusted per client need. The system is designed to start a conversation about what matters most.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- WORKED EXAMPLE: 1 Negative NYT vs 15 Positive Industry       -->
+    <!-- ============================================================ -->
+    <h3 class="mt-8">Worked Example: 1 Negative NYT Article vs. 15 Positive Industry Articles</h3>
+    <p class="section-lead">
+        Let's walk through a realistic scenario step by step so the math is completely transparent.
+    </p>
+
+    <!-- The scenario setup -->
+    <div style="background:#1e293b;border:1px solid #334155;border-radius:12px;padding:24px;margin:24px 0;">
+        <div style="font-size:13px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:16px;">The Scenario</div>
+        <p style="font-size:15px;color:#e2e8f0;margin-bottom:16px;">Imagine Cologix has a bad week. The <strong style="color:#a78bfa;">New York Times</strong> publishes a negative piece about data center power consumption concerns. But across the industry trade press, 15 articles come out about Cologix's expansion, partnerships, and market growth &mdash; all positive.</p>
+        <p style="font-size:14px;color:#94a3b8;">The question: <strong style="color:#f1f5f9;">Does one NYT article outweigh 15 industry articles?</strong> Let's find out.</p>
+    </div>
+
+    <!-- Article breakdown visual -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:28px 0;">
+
+        <!-- Left: The NYT article -->
+        <div style="background:#0f172a;border:2px solid #7c3aed;border-radius:12px;padding:20px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+                <span class="source-tier-badge" style="background:#7c3aed;color:#fff;font-size:12px;padding:4px 10px;">T1 National</span>
+                <span style="font-size:12px;color:#a78bfa;font-weight:700;">Weight: 3.0x</span>
+            </div>
+            <div style="font-size:16px;font-weight:700;color:#f1f5f9;margin-bottom:6px;">New York Times</div>
+            <div style="font-size:13px;color:#94a3b8;margin-bottom:12px;font-style:italic;">"Data Center Boom Strains Power Grids, Raising Environmental Concerns"</div>
+            <div style="display:flex;align-items:baseline;gap:8px;">
+                <span style="font-size:28px;font-weight:800;color:#f87171;">-0.65</span>
+                <span class="mock-badge mock-badge-red" style="font-size:11px;">Negative</span>
+            </div>
+            <div style="margin-top:12px;font-size:12px;color:#64748b;">1 article &times; 3.0 weight = <strong style="color:#f87171;">3.0 weight-points</strong></div>
+        </div>
+
+        <!-- Right: The 15 industry articles -->
+        <div style="background:#0f172a;border:2px solid #059669;border-radius:12px;padding:20px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+                <span class="source-tier-badge" style="background:#059669;color:#fff;font-size:12px;padding:4px 10px;">T3 Industry</span>
+                <span style="font-size:12px;color:#34d399;font-weight:700;">Weight: 1.0x each</span>
+            </div>
+            <div style="font-size:16px;font-weight:700;color:#f1f5f9;margin-bottom:6px;">15 Industry Trade Articles</div>
+            <div style="font-size:13px;color:#94a3b8;margin-bottom:4px;">Sources: Data Center Dynamics, Data Center Knowledge, TechTarget, Google News</div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:12px;">Headlines like: "Cologix Expands Montreal Campus", "Colocation Demand Surges", "Cologix Partners With Renewable Grid"...</div>
+            <div style="display:flex;align-items:baseline;gap:8px;">
+                <span style="font-size:28px;font-weight:800;color:#4ade80;">+0.30</span>
+                <span class="mock-badge mock-badge-green" style="font-size:11px;">Positive (avg)</span>
+            </div>
+            <div style="margin-top:12px;font-size:12px;color:#64748b;">15 articles &times; 1.0 weight = <strong style="color:#4ade80;">15.0 weight-points</strong></div>
+        </div>
+    </div>
+
+    <!-- Step by step math -->
+    <div style="background:#1e293b;border:1px solid #334155;border-radius:12px;overflow:hidden;margin:28px 0;">
+        <div style="background:#0f172a;padding:14px 20px;border-bottom:1px solid #334155;">
+            <span style="font-size:14px;font-weight:700;color:#f1f5f9;">Step-by-Step Calculation</span>
+        </div>
+        <div style="padding:20px;">
+
+            <!-- Step 1 -->
+            <div style="display:flex;align-items:start;gap:14px;margin-bottom:20px;">
+                <span style="background:#3b82f6;color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">1</span>
+                <div>
+                    <div style="font-size:14px;font-weight:600;color:#f1f5f9;margin-bottom:4px;">Multiply each article's sentiment by its tier weight</div>
+                    <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:14px;font-family:monospace;font-size:13px;margin-top:8px;">
+                        <div style="color:#a78bfa;">NYT article:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:#f87171;">-0.65</span> &times; <span style="color:#c4b5fd;">3.0</span> = <span style="color:#f87171;font-weight:700;">-1.95</span></div>
+                        <div style="color:#34d399;margin-top:6px;">Industry art. 1:&nbsp; <span style="color:#4ade80;">+0.35</span> &times; <span style="color:#6ee7b7;">1.0</span> = <span style="color:#4ade80;">+0.35</span></div>
+                        <div style="color:#34d399;">Industry art. 2:&nbsp; <span style="color:#4ade80;">+0.28</span> &times; <span style="color:#6ee7b7;">1.0</span> = <span style="color:#4ade80;">+0.28</span></div>
+                        <div style="color:#34d399;">Industry art. 3:&nbsp; <span style="color:#4ade80;">+0.41</span> &times; <span style="color:#6ee7b7;">1.0</span> = <span style="color:#4ade80;">+0.41</span></div>
+                        <div style="color:#34d399;">Industry art. 4:&nbsp; <span style="color:#4ade80;">+0.22</span> &times; <span style="color:#6ee7b7;">1.0</span> = <span style="color:#4ade80;">+0.22</span></div>
+                        <div style="color:#34d399;">Industry art. 5:&nbsp; <span style="color:#4ade80;">+0.18</span> &times; <span style="color:#6ee7b7;">1.0</span> = <span style="color:#4ade80;">+0.18</span></div>
+                        <div style="color:#475569;">... (10 more industry articles, avg +0.30 each)</div>
+                        <div style="color:#34d399;margin-top:4px;">Industry 6-15:&nbsp;&nbsp; avg <span style="color:#4ade80;">+0.30</span> &times; <span style="color:#6ee7b7;">1.0</span> &times; 10 = <span style="color:#4ade80;">+3.00</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div style="display:flex;align-items:start;gap:14px;margin-bottom:20px;">
+                <span style="background:#3b82f6;color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">2</span>
+                <div>
+                    <div style="font-size:14px;font-weight:600;color:#f1f5f9;margin-bottom:4px;">Sum the weighted scores (numerator)</div>
+                    <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:14px;font-family:monospace;font-size:13px;margin-top:8px;">
+                        <span style="color:#f87171;">-1.95</span> <span style="color:#64748b;">+</span> <span style="color:#4ade80;">0.35 + 0.28 + 0.41 + 0.22 + 0.18 + 3.00</span><br>
+                        <span style="color:#64748b;">= </span><span style="color:#f87171;">-1.95</span> <span style="color:#64748b;">+</span> <span style="color:#4ade80;">4.44</span><br>
+                        <span style="color:#64748b;">= </span><strong style="color:#fbbf24;font-size:15px;">+2.49</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div style="display:flex;align-items:start;gap:14px;margin-bottom:20px;">
+                <span style="background:#3b82f6;color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">3</span>
+                <div>
+                    <div style="font-size:14px;font-weight:600;color:#f1f5f9;margin-bottom:4px;">Sum the total weights (denominator)</div>
+                    <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:14px;font-family:monospace;font-size:13px;margin-top:8px;">
+                        <span style="color:#a78bfa;">3.0</span> <span style="color:#64748b;">(NYT) +</span> <span style="color:#34d399;">15 &times; 1.0</span> <span style="color:#64748b;">(industry)</span><br>
+                        <span style="color:#64748b;">= </span><strong style="color:#fbbf24;font-size:15px;">18.0</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Result -->
+            <div style="display:flex;align-items:start;gap:14px;">
+                <span style="background:#3b82f6;color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">4</span>
+                <div>
+                    <div style="font-size:14px;font-weight:600;color:#f1f5f9;margin-bottom:4px;">Divide: Weighted Sentiment Score</div>
+                    <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:14px;font-family:monospace;font-size:14px;margin-top:8px;">
+                        <span style="color:#fbbf24;">+2.49</span> <span style="color:#64748b;">/</span> <span style="color:#fbbf24;">18.0</span> <span style="color:#64748b;">= </span><strong style="color:#22c55e;font-size:18px;">+0.138</strong> <span style="color:#64748b;">&nbsp;&rarr;&nbsp;</span><span class="mock-badge mock-badge-yellow" style="font-size:12px;">Neutral</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- The visual "weight" bar comparison -->
+    <h3>Visualizing the Influence</h3>
+    <p class="section-lead">Even though there are 15x more industry articles, look at how much of the final score each side controls.</p>
+
+    <div style="background:#1e293b;border:1px solid #334155;border-radius:12px;padding:24px;margin:24px 0;">
+
+        <!-- Weight influence bar -->
+        <div style="margin-bottom:24px;">
+            <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:8px;">Share of Total Weight (Who Influences the Score)</div>
+            <div style="display:flex;height:36px;border-radius:8px;overflow:hidden;margin-bottom:8px;">
+                <div style="width:16.7%;background:#7c3aed;display:flex;align-items:center;justify-content:center;">
+                    <span style="font-size:11px;font-weight:800;color:#fff;">NYT</span>
+                </div>
+                <div style="width:83.3%;background:#059669;display:flex;align-items:center;justify-content:center;">
+                    <span style="font-size:11px;font-weight:800;color:#fff;">15 Industry Articles</span>
+                </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:#94a3b8;">
+                <span><strong style="color:#a78bfa;">3.0</strong> weight (16.7%)</span>
+                <span><strong style="color:#34d399;">15.0</strong> weight (83.3%)</span>
+            </div>
+        </div>
+
+        <!-- Article count bar for contrast -->
+        <div style="margin-bottom:24px;">
+            <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:8px;">Share of Article Count (Raw Numbers)</div>
+            <div style="display:flex;height:36px;border-radius:8px;overflow:hidden;margin-bottom:8px;">
+                <div style="width:6.25%;background:#7c3aed;display:flex;align-items:center;justify-content:center;min-width:36px;">
+                    <span style="font-size:11px;font-weight:800;color:#fff;">1</span>
+                </div>
+                <div style="width:93.75%;background:#059669;display:flex;align-items:center;justify-content:center;">
+                    <span style="font-size:11px;font-weight:800;color:#fff;">15</span>
+                </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:#94a3b8;">
+                <span><strong style="color:#a78bfa;">1</strong> article (6.25%)</span>
+                <span><strong style="color:#34d399;">15</strong> articles (93.75%)</span>
+            </div>
+        </div>
+
+        <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:14px;font-size:13px;color:#94a3b8;">
+            <strong style="color:#f1f5f9;">Key insight:</strong> The single NYT article makes up only 6% of the article count, but controls <strong style="color:#a78bfa;">16.7% of the weighted influence</strong>. That's almost 3x its "fair share" by count alone. Without weighting, the NYT article would be just 1/16th of the score. With weighting, it's closer to 1/6th &mdash; still outvoted by 15 industry articles, but with a meaningfully louder voice.
+        </div>
+    </div>
+
+    <!-- Side by side final comparison -->
+    <h3>The Final Comparison</h3>
+    <p class="section-lead">Same 16 articles, two different scoring methods.</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:24px 0;">
+        <!-- Without weighting -->
+        <div style="background:#0f172a;border:2px solid #334155;border-radius:12px;padding:24px;text-align:center;">
+            <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:12px;">Without Weighting</div>
+            <div style="font-size:13px;color:#94a3b8;margin-bottom:12px;">(simple average: every article counts equally)</div>
+            <div style="font-size:40px;font-weight:800;color:#eab308;">+0.24</div>
+            <div style="font-size:13px;color:#eab308;font-weight:600;margin-bottom:14px;">Positive</div>
+            <div style="background:#1e293b;border-radius:8px;padding:12px;font-family:monospace;font-size:12px;color:#94a3b8;text-align:left;">
+                (-0.65 + 4.44) / <strong style="color:#f1f5f9;">16</strong> = +0.24<br>
+                <span style="color:#64748b;font-size:11px;">The NYT negativity barely registers &mdash; it's just 1 of 16 voices.</span>
+            </div>
+        </div>
+        <!-- With weighting -->
+        <div style="background:#0f172a;border:2px solid #3b82f6;border-radius:12px;padding:24px;text-align:center;">
+            <div style="font-size:12px;font-weight:700;color:#3b82f6;text-transform:uppercase;margin-bottom:12px;">With Weighting</div>
+            <div style="font-size:13px;color:#94a3b8;margin-bottom:12px;">(tier-weighted: authority sources count more)</div>
+            <div style="font-size:40px;font-weight:800;color:#eab308;">+0.14</div>
+            <div style="font-size:13px;color:#eab308;font-weight:600;margin-bottom:14px;">Neutral</div>
+            <div style="background:#1e293b;border-radius:8px;padding:12px;font-family:monospace;font-size:12px;color:#94a3b8;text-align:left;">
+                (+2.49) / <strong style="color:#f1f5f9;">18.0</strong> = +0.14<br>
+                <span style="color:#64748b;font-size:11px;">The NYT article pulls the score down noticeably, reflecting real-world impact.</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="callout-amber callout">
+        <h4>Why This Matters for Cologix</h4>
+        <p>Without weighting, the dashboard would say <strong>"everything is fine, you're positive"</strong> &mdash; burying the fact that the New York Times just published a negative story that millions of people will see. The C-suite, investors, and partners are far more likely to have read the NYT than Data Center Knowledge.<br><br>
+        With weighting, the score drops to <strong>Neutral</strong>, which is the honest signal: yes, industry coverage is good, but there's a high-visibility concern that needs attention. That's the kind of nuance that drives better decisions.<br><br>
+        And critically, the 15 industry articles <strong>still win</strong> &mdash; the score is positive-leaning, not negative. The weighting doesn't let one article override everything. It just ensures that article's outsized real-world reach is reflected proportionally in the score.</p>
+    </div>
+
+    <!-- What if it were reversed? -->
+    <div style="background:#1e293b;border:1px solid #334155;border-radius:12px;padding:24px;margin:24px 0;">
+        <div style="font-size:14px;font-weight:700;color:#f1f5f9;margin-bottom:12px;">Flip It: What If the NYT Article Were Positive?</div>
+        <p style="font-size:14px;color:#94a3b8;margin-bottom:16px;">Same scenario, but the NYT publishes <em>"Cologix Leads Industry in Sustainable Data Center Innovation"</em> with a sentiment score of <strong style="color:#4ade80;">+0.70</strong>.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div style="background:#0f172a;border-radius:8px;padding:14px;text-align:center;">
+                <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Without Weighting</div>
+                <div style="font-size:28px;font-weight:800;color:#22c55e;margin-top:6px;">+0.33</div>
+                <div style="font-family:monospace;font-size:11px;color:#64748b;margin-top:4px;">(0.70 + 4.44) / 16</div>
+            </div>
+            <div style="background:#0f172a;border-radius:8px;padding:14px;text-align:center;">
+                <div style="font-size:11px;font-weight:700;color:#3b82f6;text-transform:uppercase;">With Weighting</div>
+                <div style="font-size:28px;font-weight:800;color:#22c55e;margin-top:6px;">+0.36</div>
+                <div style="font-family:monospace;font-size:11px;color:#64748b;margin-top:4px;">(2.10 + 4.44) / 18.0</div>
+            </div>
+        </div>
+        <p style="font-size:13px;color:#94a3b8;margin-top:12px;">The positive NYT coverage <strong style="color:#f1f5f9;">amplifies</strong> the good news. Weighting works symmetrically: it boosts signal from authoritative sources regardless of whether that signal is good or bad.</p>
+    </div>
+</div>
+
+<div class="section-divider"><hr></div>
+
+<!-- ================================================================== -->
+<!-- 5. DATA SOURCES -->
+<!-- ================================================================== -->
+<div class="section" id="sources">
+    <span class="section-num">5</span>
+    <h2>Where the Data Comes From</h2>
+    <p class="section-lead">
+        Sentiment Vision collects articles from two categories of sources. Here's exactly what we monitor and why.
+    </p>
+
+    <h3>Global Sources (Shared Across All Clients)</h3>
+    <p style="color:#94a3b8;font-size:14px;margin-bottom:16px;">These 10 mass-media feeds are fetched once per run. Each article is then keyword-matched against every client's name, industries, and competitors. If an article mentions relevant terms, it's stored for that client.</p>
+
+    <div class="source-grid">
+        <div class="source-card">
+            <span class="source-tier-badge" style="background:#7c3aed;color:#fff;">T1</span>
+            <div>
+                <div class="source-name">Reuters</div>
+                <div class="source-detail">via Google News RSS &bull; National/International</div>
+            </div>
+        </div>
+        <div class="source-card">
+            <span class="source-tier-badge" style="background:#7c3aed;color:#fff;">T1</span>
+            <div>
+                <div class="source-name">AP News</div>
+                <div class="source-detail">via Google News RSS &bull; Business focus</div>
+            </div>
+        </div>
+        <div class="source-card">
+            <span class="source-tier-badge" style="background:#7c3aed;color:#fff;">T1</span>
+            <div>
+                <div class="source-name">NPR Business</div>
+                <div class="source-detail">Direct RSS feed</div>
+            </div>
+        </div>
+        <div class="source-card">
+            <span class="source-tier-badge" style="background:#7c3aed;color:#fff;">T1</span>
+            <div>
+                <div class="source-name">BBC Business</div>
+                <div class="source-detail">Direct RSS feed</div>
+            </div>
+        </div>
+        <div class="source-card">
+            <span class="source-tier-badge" style="background:#7c3aed;color:#fff;">T1</span>
+            <div>
+                <div class="source-name">New York Times Business</div>
+                <div class="source-detail">Direct RSS feed</div>
+            </div>
+        </div>
+        <div class="source-card">
+            <span class="source-tier-badge" style="background:#2563eb;color:#fff;">T2</span>
+            <div>
+                <div class="source-name">TechCrunch</div>
+                <div class="source-detail">Direct RSS feed</div>
+            </div>
+        </div>
+        <div class="source-card">
+            <span class="source-tier-badge" style="background:#2563eb;color:#fff;">T2</span>
+            <div>
+                <div class="source-name">Ars Technica</div>
+                <div class="source-detail">Direct RSS feed</div>
+            </div>
+        </div>
+        <div class="source-card">
+            <span class="source-tier-badge" style="background:#2563eb;color:#fff;">T2</span>
+            <div>
+                <div class="source-name">The Verge</div>
+                <div class="source-detail">Direct RSS feed</div>
+            </div>
+        </div>
+        <div class="source-card">
+            <span class="source-tier-badge" style="background:#2563eb;color:#fff;">T2</span>
+            <div>
+                <div class="source-name">CNBC</div>
+                <div class="source-detail">Direct RSS feed</div>
+            </div>
+        </div>
+        <div class="source-card">
+            <span class="source-tier-badge" style="background:#2563eb;color:#fff;">T2</span>
+            <div>
+                <div class="source-name">Bloomberg</div>
+                <div class="source-detail">via Google News RSS</div>
+            </div>
+        </div>
+    </div>
+
+    <h3 class="mt-8">Cologix-Specific Sources (Tier 3 Industry)</h3>
+    <p style="color:#94a3b8;font-size:14px;margin-bottom:16px;">These feeds are dedicated to the data center industry and fetched specifically for Cologix. They default to Tier 3 (industry trade) weighting.</p>
+
+    <div class="source-grid">
+        <div class="source-card">
+            <span class="source-tier-badge" style="background:#059669;color:#fff;">T3</span>
+            <div>
+                <div class="source-name">Data Center Dynamics (DCD)</div>
+                <div class="source-detail">RSS &bull; datacenterdynamics.com &bull; Leading industry publication</div>
+            </div>
+        </div>
+        <div class="source-card">
+            <span class="source-tier-badge" style="background:#059669;color:#fff;">T3</span>
+            <div>
+                <div class="source-name">Data Center Knowledge</div>
+                <div class="source-detail">RSS &bull; datacenterknowledge.com &bull; Industry analysis</div>
+            </div>
+        </div>
+        <div class="source-card">
+            <span class="source-tier-badge" style="background:#059669;color:#fff;">T3</span>
+            <div>
+                <div class="source-name">TechTarget SearchDataCenter</div>
+                <div class="source-detail">RSS &bull; techtarget.com &bull; Enterprise IT audience</div>
+            </div>
+        </div>
+        <div class="source-card">
+            <span class="source-tier-badge" style="background:#059669;color:#fff;">T3</span>
+            <div>
+                <div class="source-name">Google News &mdash; "Cologix"</div>
+                <div class="source-detail">Search &bull; Catches any article mentioning Cologix</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="callout">
+        <h4>How Articles Get Matched to Cologix</h4>
+        <p>For global sources (T1/T2): the system fetches all articles from the feed, then checks if the article's title or body contains any of these keywords (case-insensitive): <strong>"Cologix"</strong>, <strong>"Data Centers"</strong>, <strong>"Colocation"</strong>, <strong>"Digital Edge"</strong>, or <strong>"Digital Real Estate"</strong>. Any match stores the article under Cologix.<br><br>
+        For client-specific sources (T3): all articles from Cologix's dedicated feeds are stored directly &mdash; they're already topically relevant by source selection.</p>
+    </div>
+</div>
+
+<div class="section-divider"><hr></div>
+
+<!-- ================================================================== -->
+<!-- 6. HOW IT WORKS (ARCHITECTURE) -->
+<!-- ================================================================== -->
+<div class="section" id="architecture">
+    <span class="section-num">6</span>
+    <h2>How It Works</h2>
+    <p class="section-lead">
+        The system runs automatically via cron. Here's the pipeline from source to sentiment score.
+    </p>
+
+    <div class="flow">
+        <div class="flow-step">
+            <div class="flow-step-label">Step 1</div>
+            <div class="flow-step-text">RSS Feeds Fetched</div>
+        </div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-step">
+            <div class="flow-step-label">Step 2</div>
+            <div class="flow-step-text">Content Extracted</div>
+        </div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-step">
+            <div class="flow-step-label">Step 3</div>
+            <div class="flow-step-text">Client Matched</div>
+        </div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-step">
+            <div class="flow-step-label">Step 4</div>
+            <div class="flow-step-text">Sentiment Scored</div>
+        </div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-step">
+            <div class="flow-step-label">Step 5</div>
+            <div class="flow-step-text">Dashboard Updated</div>
+        </div>
+    </div>
+
+    <div style="margin-top: 32px;">
+        <div class="source-grid">
+            <div class="source-card" style="flex-direction: column;">
+                <div class="source-name" style="margin-bottom: 6px;">1. Article Collection</div>
+                <div class="source-detail">The Python orchestrator pulls articles from all configured RSS feeds and search URLs. Global sources (Reuters, AP, etc.) are fetched once. Per-client sources (DCD, Data Center Knowledge) are fetched per client. Rate-limited to 1 request every 2 seconds per domain.</div>
+            </div>
+            <div class="source-card" style="flex-direction: column;">
+                <div class="source-name" style="margin-bottom: 6px;">2. Content Extraction</div>
+                <div class="source-detail">For each article URL, the system visits the page and extracts clean article text using trafilatura (primary) with readability-lxml as fallback. Strips ads, navigation, sidebars. Extracts: title, author, date, full text, word count.</div>
+            </div>
+            <div class="source-card" style="flex-direction: column;">
+                <div class="source-name" style="margin-bottom: 6px;">3. Client Keyword Matching</div>
+                <div class="source-detail">Global-source articles are checked against each client's keywords (company name, industries, competitors). Matching articles are stored with the appropriate client and media tier. Deduplication by URL prevents double-counting.</div>
+            </div>
+            <div class="source-card" style="flex-direction: column;">
+                <div class="source-name" style="margin-bottom: 6px;">4. Sentiment Analysis</div>
+                <div class="source-detail">Uses VADER (Valence Aware Dictionary and sEntiment Reasoner). Long articles are split into sentences; each scored individually. Near-zero sentences are filtered out to prevent neutral dilution. Final score: mean of significant sentence scores (-1.0 to +1.0).</div>
+            </div>
+            <div class="source-card" style="flex-direction: column;">
+                <div class="source-name" style="margin-bottom: 6px;">5. Weighted Dashboard</div>
+                <div class="source-detail">The web dashboard queries all stored articles, applies media tier weights at query time, and renders the gauges, bars, and scores. Tier toggles allow real-time filtering. All data is queryable by client, sentiment, and media tier.</div>
+            </div>
+            <div class="source-card" style="flex-direction: column;">
+                <div class="source-name" style="margin-bottom: 6px;">6. Client Management</div>
+                <div class="source-detail">New clients can be added through the web UI. Just enter a name, industries, competitors, and source feeds. The system auto-generates Google News search URLs for comprehensive coverage. Config stored as YAML for easy review.</div>
+            </div>
+        </div>
+    </div>
+
+    <h3 class="mt-8">Tech Stack</h3>
+    <div class="source-grid">
+        <div class="source-card" style="flex-direction: column;">
+            <div class="source-name">Backend</div>
+            <div class="source-detail" style="margin-top: 4px;">Python 3.13, VADER NLP, trafilatura, feedparser, BeautifulSoup</div>
+        </div>
+        <div class="source-card" style="flex-direction: column;">
+            <div class="source-name">Database</div>
+            <div class="source-detail" style="margin-top: 4px;">MySQL with composite unique keys for deduplication</div>
+        </div>
+        <div class="source-card" style="flex-direction: column;">
+            <div class="source-name">Web Dashboard</div>
+            <div class="source-detail" style="margin-top: 4px;">PHP with vanilla HTML/CSS/JS &mdash; no framework overhead</div>
+        </div>
+        <div class="source-card" style="flex-direction: column;">
+            <div class="source-name">Scheduling</div>
+            <div class="source-detail" style="margin-top: 4px;">Cron-based, designed for GreenGeeks shared hosting deployment</div>
+        </div>
+    </div>
+</div>
+
+<div class="section-divider"><hr></div>
+
+<!-- ================================================================== -->
+<!-- CLOSING -->
+<!-- ================================================================== -->
+<div class="section" style="text-align: center; padding-bottom: 80px;">
+    <h2 style="margin-bottom: 12px;">Next Steps</h2>
+    <p class="section-lead" style="margin: 0 auto;">
+        This system is built and functional. The core data pipeline, sentiment analysis, media weighting, and dashboards are all in place. Ready to discuss: adding more clients, adjusting tier weights, expanding source coverage, or deploying to production.
+    </p>
+</div>
+
+<!-- Scroll spy script -->
+<script>
+(function() {
+    const sections = ['overview', 'dashboard', 'cologix', 'weighting', 'sources', 'architecture'];
+    const links = document.querySelectorAll('.demo-nav-links a');
+
+    function updateActive() {
+        let current = '';
+        for (const id of sections) {
+            const el = document.getElementById(id);
+            if (el && el.getBoundingClientRect().top <= 120) {
+                current = id;
+            }
+        }
+        links.forEach(link => {
+            link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+        });
+    }
+
+    window.addEventListener('scroll', updateActive, { passive: true });
+    updateActive();
+})();
+</script>
+
+</body>
+</html>
