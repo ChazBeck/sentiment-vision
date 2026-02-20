@@ -77,6 +77,7 @@ SCHEMA_SQL = [
         language        VARCHAR(10),
         sentiment_score FLOAT,
         sentiment_label VARCHAR(20),
+        score_method    ENUM('vader', 'ai') DEFAULT 'vader',
         media_tier      TINYINT NOT NULL DEFAULT 3,
         esg_tags        JSON,
         esg_score       FLOAT,
@@ -144,6 +145,7 @@ MIGRATION_SQL = [
     "ALTER TABLE sources ADD COLUMN media_tier TINYINT NOT NULL DEFAULT 3",
     "ALTER TABLE sources ADD COLUMN is_global TINYINT NOT NULL DEFAULT 0",
     "ALTER TABLE articles ADD COLUMN media_tier TINYINT NOT NULL DEFAULT 3",
+    "ALTER TABLE articles ADD COLUMN score_method ENUM('vader', 'ai') DEFAULT 'vader'",
 ]
 
 

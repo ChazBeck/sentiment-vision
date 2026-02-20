@@ -23,6 +23,13 @@ sentiment:
   positive_threshold: 0.2
   negative_threshold: -0.2
   batch_size: 500
+  ai_scoring:
+    enabled: false                    # Set to true to activate Claude hybrid scoring
+    model: "claude-haiku-4-20250514"  # Cheapest/fastest model
+    max_words: 500                    # Truncate article text sent to API
+    max_tokens: 100                   # Max response tokens from Claude
+    temperature: 0                    # Deterministic scoring
+    monthly_budget_usd: 3.0           # Soft cap — logs warning when exceeded
 
 logging:
   level: "INFO"

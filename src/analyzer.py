@@ -1,11 +1,13 @@
 """
-Sentiment analysis module using VADER.
+Sentiment analysis module — VADER + Claude AI hybrid.
 
 Scores articles on a -1.0 (negative) to +1.0 (positive) scale.
-For long articles, uses sentence-level scoring with aggregation
-to avoid dilution by neutral filler sentences.
+VADER handles clear-positive and clear-negative articles for free.
+Articles in the neutral zone are escalated to Claude Haiku for
+context-aware scoring from the client's perspective.
 """
 
+import json
 import logging
 import re
 from datetime import datetime, timezone
@@ -120,24 +122,56 @@ def score_label(score: float, settings: dict) -> str:
     return "neutral"
 
 
-def score_article(article_row: dict, settings: dict) -> dict:
+def score_article(article_row: dict, settings: dict, client_context: dict = None) -> dict:
     """
-    Score a single article. Uses content_text if available, falls back to title.
-    Returns dict with sentiment_score, sentiment_label, analyzed_at.
+    Score a single article using hybrid VADER + AI approach.
+
+    1. Always runs VADER first (free, instant).
+    2. If the VADER score falls in the neutral zone AND AI scoring is enabled,
+       escalates to Claude Haiku for context-aware re-scoring.
+    3. Falls back to VADER if AI scoring fails for any reason.
+
+    Returns dict with sentiment_score, sentiment_label, score_method, analyzed_at.
     """
     text = article_row.get("content_text") or article_row.get("title") or ""
     if not text.strip():
         return {
             "sentiment_score": 0.0,
             "sentiment_label": "neutral",
+            "score_method": "vader",
             "analyzed_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
         }
 
-    score = score_text(text)
-    label = score_label(score, settings)
+    # Step 1: VADER scoring (always runs)
+    vader_score = score_text(text)
+    vader_label = score_label(vader_score, settings)
+
+    final_score = vader_score
+    final_label = vader_label
+    score_method = "vader"
+
+    # Step 2: Check if AI escalation is warranted
+    ai_cfg = settings.get("sentiment", {}).get("ai_scoring", {})
+    pos_threshold = settings.get("sentiment", {}).get("positive_threshold", 0.2)
+    neg_threshold = settings.get("sentiment", {}).get("negative_threshold", -0.2)
+    in_neutral_zone = neg_threshold <= vader_score < pos_threshold
+
+    if in_neutral_zone and ai_cfg.get("enabled") and client_context:
+        try:
+            from .ai_scorer import score_with_ai
+
+            ai_result = score_with_ai(article_row, client_context, settings)
+            if ai_result:
+                final_score = ai_result["sentiment_score"]
+                final_label = ai_result["sentiment_label"]
+                score_method = "ai"
+        except ImportError:
+            pass  # anthropic not installed, stay with VADER
+
     return {
-        "sentiment_score": round(score, 4),
-        "sentiment_label": label,
+        "sentiment_score": round(final_score, 4),
+        "sentiment_label": final_label,
+        "score_method": score_method,
         "analyzed_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
     }
 
@@ -145,6 +179,7 @@ def score_article(article_row: dict, settings: dict) -> dict:
 def analyze_unscored(conn, settings: dict) -> int:
     """
     Batch-score all articles where sentiment_score IS NULL.
+    Uses hybrid VADER + AI scoring when AI is enabled.
     Updates each row in-place. Returns count of articles scored.
     """
     batch_size = settings.get("sentiment", {}).get("batch_size", 500)
@@ -152,10 +187,12 @@ def analyze_unscored(conn, settings: dict) -> int:
     conn = _ensure_connection(conn)
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
-        """SELECT id, title, content_text
-           FROM articles
-           WHERE sentiment_score IS NULL
-           ORDER BY fetched_at DESC
+        """SELECT a.id, a.title, a.content_text, a.client_id,
+                  c.name AS client_name, c.industries AS client_industries
+           FROM articles a
+           JOIN clients c ON a.client_id = c.id
+           WHERE a.sentiment_score IS NULL
+           ORDER BY a.fetched_at DESC
            LIMIT %s""",
         (batch_size,),
     )
@@ -166,28 +203,47 @@ def analyze_unscored(conn, settings: dict) -> int:
         logger.info("No unscored articles found")
         return 0
 
-    logger.info(f"Scoring {len(rows)} unscored articles")
+    ai_enabled = settings.get("sentiment", {}).get("ai_scoring", {}).get("enabled", False)
+    logger.info(
+        f"Scoring {len(rows)} unscored articles"
+        f"{' (AI hybrid enabled)' if ai_enabled else ''}"
+    )
     scored_count = 0
+    ai_count = 0
 
     conn = _ensure_connection(conn)
     update_cursor = conn.cursor()
     for row in rows:
         try:
-            result = score_article(row, settings)
+            # Build client context for AI scorer
+            industries = row.get("client_industries", "[]")
+            if isinstance(industries, str):
+                industries = json.loads(industries)
+            client_context = {
+                "name": row.get("client_name", "Unknown"),
+                "industries": industries,
+            }
+
+            result = score_article(row, settings, client_context=client_context)
+
             update_cursor.execute(
                 """UPDATE articles
                    SET sentiment_score = %s,
                        sentiment_label = %s,
+                       score_method = %s,
                        analyzed_at = %s
                    WHERE id = %s""",
                 (
                     result["sentiment_score"],
                     result["sentiment_label"],
+                    result["score_method"],
                     result["analyzed_at"],
                     row["id"],
                 ),
             )
             scored_count += 1
+            if result["score_method"] == "ai":
+                ai_count += 1
 
             if scored_count % 50 == 0:
                 conn.commit()
@@ -200,5 +256,19 @@ def analyze_unscored(conn, settings: dict) -> int:
     conn.commit()
     update_cursor.close()
 
-    logger.info(f"Sentiment analysis complete: {scored_count} articles scored")
+    # Log session summary
+    if ai_count > 0:
+        try:
+            from .ai_scorer import get_session_stats
+            stats = get_session_stats()
+            logger.info(
+                f"Sentiment analysis complete: {scored_count} articles scored "
+                f"({ai_count} via AI, {scored_count - ai_count} via VADER, "
+                f"est. cost: ${stats['estimated_cost_usd']:.4f})"
+            )
+        except ImportError:
+            logger.info(f"Sentiment analysis complete: {scored_count} articles scored")
+    else:
+        logger.info(f"Sentiment analysis complete: {scored_count} articles scored (all VADER)")
+
     return scored_count

@@ -8,3 +8,4 @@ pyyaml==6.0.2
 mysql-connector-python==9.1.0
 vaderSentiment==3.3.2
 googlenewsdecoder==0.1.7
+anthropic>=0.39.0
