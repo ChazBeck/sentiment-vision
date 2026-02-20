@@ -22,19 +22,21 @@ def get_project_root() -> Path:
     return Path(__file__).resolve().parent.parent
 
 
-# Only keep articles published in the current year
-MIN_YEAR = datetime.now().year
+# Only keep articles published within the last 6 months (~183 days)
+MAX_AGE_DAYS = 183
 
 
 def _is_recent(article: dict) -> bool:
-    """Return True if article was published in the current year (or has no date)."""
+    """Return True if article was published within the last 6 months (or has no date)."""
     pub = article.get("published_date")
     if not pub:
         return True  # keep articles with unknown dates
     try:
-        # published_date is a string like "2024-03-15 00:00:00"
-        year = int(str(pub)[:4])
-        return year >= MIN_YEAR
+        from datetime import timedelta
+        pub_str = str(pub)[:19]  # "2024-03-15 00:00:00"
+        pub_dt = datetime.strptime(pub_str, "%Y-%m-%d %H:%M:%S")
+        cutoff = datetime.now() - timedelta(days=MAX_AGE_DAYS)
+        return pub_dt >= cutoff
     except (ValueError, TypeError):
         return True
 
