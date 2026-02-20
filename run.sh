@@ -10,4 +10,8 @@ PROJECT_DIR="/home/charle22/public_html/tools.veerl.es/dev/sentiment-vision"
 
 source "$PROJECT_DIR/venv/bin/activate"
 cd "$PROJECT_DIR"
+
+# Standalone Python builds don't include CA certs — use certifi's bundle
+export SSL_CERT_FILE="$(python -c 'import certifi; print(certifi.where())' 2>/dev/null)"
+
 python -m src.main --analyze "$@" 2>&1

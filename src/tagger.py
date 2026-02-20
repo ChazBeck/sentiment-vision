@@ -9,6 +9,8 @@ import json
 import logging
 import re
 
+from .storage import _ensure_connection
+
 logger = logging.getLogger("sentiment_vision")
 
 
@@ -17,6 +19,7 @@ def load_tags_for_client(conn, client_id: int) -> list:
     Load all enabled tags applicable to a given client.
     Returns both global tags and client-specific tags for this client.
     """
+    conn = _ensure_connection(conn)
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
         """SELECT id, name, tag_type, scope, keywords, match_method, color
@@ -113,6 +116,7 @@ def tag_article(conn, article_id: int, client_id: int, text: str) -> list:
     if not all_matches:
         return []
 
+    conn = _ensure_connection(conn)
     cursor = conn.cursor()
     for m in all_matches:
         cursor.execute(
@@ -147,6 +151,7 @@ def tag_untagged(conn, client_id: int, batch_size: int = 500) -> int:
     Batch-tag articles that have no entries in article_tags yet.
     Returns count of articles that received at least one tag.
     """
+    conn = _ensure_connection(conn)
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
         """SELECT a.id, a.title, a.content_text
@@ -190,6 +195,7 @@ def retag_all(conn, client_id: int, batch_size: int = 500) -> int:
     Clear existing tags and re-tag all articles for a client.
     Returns count of articles that received at least one tag.
     """
+    conn = _ensure_connection(conn)
     cursor = conn.cursor()
     # Delete existing article_tags for this client's articles
     cursor.execute(

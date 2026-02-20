@@ -74,7 +74,13 @@ if ($argc > 1) {
     $extra_args = ' ' . implode(' ', array_map('escapeshellarg', array_slice($argv, 1)));
 }
 
-$cmd = "cd " . escapeshellarg($project_dir)
+// Standalone Python builds don't include CA certs — use certifi's bundle
+$ssl_cert_cmd = escapeshellarg($python_bin) . " -c \"import certifi; print(certifi.where())\" 2>/dev/null";
+$ssl_cert_file = trim(shell_exec($ssl_cert_cmd) ?? '');
+$ssl_export = $ssl_cert_file ? "export SSL_CERT_FILE=" . escapeshellarg($ssl_cert_file) . " && " : "";
+
+$cmd = $ssl_export
+     . "cd " . escapeshellarg($project_dir)
      . " && " . escapeshellarg($python_bin)
      . " -m src.main --analyze" . $extra_args
      . " 2>&1";

@@ -12,6 +12,8 @@ from datetime import datetime, timezone
 
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
+from .storage import _ensure_connection
+
 logger = logging.getLogger("sentiment_vision")
 
 # Module-level singleton — VADER's __init__ loads the lexicon once (~5MB, ~50ms)
@@ -147,6 +149,7 @@ def analyze_unscored(conn, settings: dict) -> int:
     """
     batch_size = settings.get("sentiment", {}).get("batch_size", 500)
 
+    conn = _ensure_connection(conn)
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
         """SELECT id, title, content_text
@@ -166,6 +169,7 @@ def analyze_unscored(conn, settings: dict) -> int:
     logger.info(f"Scoring {len(rows)} unscored articles")
     scored_count = 0
 
+    conn = _ensure_connection(conn)
     update_cursor = conn.cursor()
     for row in rows:
         try:

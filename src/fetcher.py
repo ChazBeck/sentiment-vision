@@ -267,6 +267,8 @@ def refetch_empty(conn, settings: dict, batch_size: int = 500) -> int:
     """Re-download content for articles with empty/null content_text.
     Resolves Google News redirect URLs before extraction.
     Returns count of articles successfully updated."""
+    from .storage import _ensure_connection
+    conn = _ensure_connection(conn)
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
         """SELECT id, url, title, author, published_date
@@ -297,6 +299,7 @@ def refetch_empty(conn, settings: dict, batch_size: int = 500) -> int:
                 logger.debug(f"  Still no content for article {row['id']}: {fetch_url[:80]}")
                 continue
 
+            conn = _ensure_connection(conn)
             cursor = conn.cursor()
             # Fill in missing metadata too — preserve existing values if present
             title = extracted.get("title") or row["title"]

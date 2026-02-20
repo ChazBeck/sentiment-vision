@@ -5,6 +5,35 @@ import mysql.connector
 
 logger = logging.getLogger("sentiment_vision")
 
+# ---------------------------------------------------------------------------
+# Connection settings stored for reconnection
+# ---------------------------------------------------------------------------
+_db_config: dict = {}
+
+
+def _ensure_connection(conn):
+    """Ping the connection; if it dropped, reconnect transparently.
+
+    GreenGeeks shared MySQL has aggressive idle timeouts (~60-120 s).
+    Long RSS fetches + content extraction can easily exceed this, so we
+    reconnect on the fly rather than holding a single long-lived connection.
+
+    Returns the (possibly new) connection object.
+    """
+    try:
+        conn.ping(reconnect=True, attempts=3, delay=2)
+        return conn
+    except mysql.connector.Error:
+        # ping(reconnect=True) should handle it, but if it fails we
+        # reconnect manually using the saved config.
+        if _db_config:
+            logger.warning("MySQL connection lost — reconnecting…")
+            new_conn = mysql.connector.connect(**_db_config)
+            new_conn.autocommit = False
+            return new_conn
+        raise
+
+
 SCHEMA_SQL = [
     """
     CREATE TABLE IF NOT EXISTS clients (
@@ -120,8 +149,9 @@ MIGRATION_SQL = [
 
 def init_db(settings: dict):
     """Connect to MySQL, create schema if needed, return connection."""
+    global _db_config
     db_cfg = settings.get("database", {})
-    conn = mysql.connector.connect(
+    _db_config = dict(
         host=db_cfg.get("host", "localhost"),
         port=db_cfg.get("port", 3306),
         user=db_cfg.get("user"),
@@ -129,7 +159,9 @@ def init_db(settings: dict):
         database=db_cfg.get("database"),
         charset="utf8mb4",
         collation="utf8mb4_unicode_ci",
+        connection_timeout=30,
     )
+    conn = mysql.connector.connect(**_db_config)
     cursor = conn.cursor()
     for statement in SCHEMA_SQL:
         try:
@@ -158,6 +190,7 @@ def init_db(settings: dict):
 
 def sync_clients(conn, clients) -> dict:
     """Upsert clients from config into DB. Returns {name: id} mapping."""
+    conn = _ensure_connection(conn)
     cursor = conn.cursor()
     client_map = {}
     for client in clients:
@@ -178,6 +211,7 @@ def sync_clients(conn, clients) -> dict:
 
 def sync_sources(conn, client_id: int, sources) -> dict:
     """Upsert sources for a client. Returns {url: id} mapping."""
+    conn = _ensure_connection(conn)
     cursor = conn.cursor()
     source_map = {}
     for source in sources:
@@ -203,6 +237,7 @@ def sync_sources(conn, client_id: int, sources) -> dict:
 
 def sync_global_sources(conn, global_sources) -> dict:
     """Upsert global sources (client_id=NULL, is_global=1). Returns {url: id} mapping."""
+    conn = _ensure_connection(conn)
     cursor = conn.cursor()
     source_map = {}
     for source in global_sources:
@@ -235,6 +270,7 @@ def sync_global_sources(conn, global_sources) -> dict:
 
 def store_article(conn, article: dict, client_id: int, source_id: int, media_tier: int = 3):
     """Insert article with dedup via INSERT IGNORE. Returns article ID if new, None if duplicate."""
+    conn = _ensure_connection(conn)
     cursor = conn.cursor()
     summary = article.get("summary") or ""
     if not summary and article.get("content_text"):
@@ -276,6 +312,7 @@ def log_fetch(
     error_message: str = None,
 ):
     """Record a fetch attempt in the fetch_log table."""
+    conn = _ensure_connection(conn)
     cursor = conn.cursor()
     cursor.execute(
         """INSERT INTO fetch_log
@@ -293,6 +330,7 @@ def log_fetch(
 
 def get_all_tags(conn, scope: str = None, client_id: int = None) -> list:
     """Retrieve tags with optional filtering. Returns list of dicts."""
+    conn = _ensure_connection(conn)
     cursor = conn.cursor(dictionary=True)
     if scope == "global":
         cursor.execute(
@@ -315,6 +353,7 @@ def get_all_tags(conn, scope: str = None, client_id: int = None) -> list:
 
 def get_tag_by_id(conn, tag_id: int) -> dict:
     """Retrieve a single tag by ID. Returns dict or None."""
+    conn = _ensure_connection(conn)
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM tags WHERE id = %s", (tag_id,))
     row = cursor.fetchone()
@@ -328,6 +367,7 @@ def create_tag(conn, name: str, tag_type: str, scope: str,
                keywords: list, client_id: int = None,
                match_method: str = "keyword", color: str = "#6366f1") -> int:
     """Insert a new tag. Returns the new tag ID."""
+    conn = _ensure_connection(conn)
     cursor = conn.cursor()
     cursor.execute(
         """INSERT INTO tags (name, tag_type, scope, client_id, keywords, match_method, color)
@@ -360,6 +400,7 @@ def update_tag(conn, tag_id: int, name: str = None, keywords: list = None,
     if not updates:
         return
     params.append(tag_id)
+    conn = _ensure_connection(conn)
     cursor = conn.cursor()
     cursor.execute(f"UPDATE tags SET {', '.join(updates)} WHERE id = %s", params)
     conn.commit()
@@ -368,6 +409,7 @@ def update_tag(conn, tag_id: int, name: str = None, keywords: list = None,
 
 def delete_tag(conn, tag_id: int):
     """Delete a tag (CASCADE removes article_tags entries)."""
+    conn = _ensure_connection(conn)
     cursor = conn.cursor()
     cursor.execute("DELETE FROM tags WHERE id = %s", (tag_id,))
     conn.commit()
