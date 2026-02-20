@@ -193,10 +193,9 @@ $edit_client_tags = [];
 $tag_message = '';
 $tag_message_type = '';
 
-$db = new mysqli('localhost', 'sv_user', 'sv_dev_pass', 'sentiment_vision');
-$db_ok = !$db->connect_error;
-if ($db_ok) {
-    $db->set_charset('utf8mb4');
+require_once __DIR__ . '/includes/db_connect.php';
+$db_ok = true;
+{
 
     // Look up DB IDs for client "View" links
     $res = $db->query("SELECT id, name FROM clients");

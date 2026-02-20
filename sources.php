@@ -4,11 +4,7 @@
  * Manage global and client-specific RSS/HTML/search sources.
  */
 
-$db = new mysqli('localhost', 'sv_user', 'sv_dev_pass', 'sentiment_vision');
-if ($db->connect_error) {
-    die('DB connection failed: ' . htmlspecialchars($db->connect_error));
-}
-$db->set_charset('utf8mb4');
+require_once __DIR__ . '/includes/db_connect.php';
 
 $message = '';
 $message_type = '';

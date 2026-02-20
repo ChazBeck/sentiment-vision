@@ -34,19 +34,53 @@ class ClientConfig:
     sources: list = field(default_factory=list)
 
 
+def _load_dotenv(project_root: Path) -> None:
+    """Read .env file from project root and inject into os.environ (if not already set)."""
+    env_path = project_root / ".env"
+    if not env_path.exists():
+        return
+    with open(env_path, "r") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if "=" not in line:
+                continue
+            key, _, val = line.partition("=")
+            key = key.strip()
+            val = val.strip()
+            # Strip surrounding quotes
+            if len(val) >= 2 and val[0] == val[-1] and val[0] in ('"', "'"):
+                val = val[1:-1]
+            # Don't overwrite vars already set in the real environment
+            if key not in os.environ:
+                os.environ[key] = val
+
+
 def load_settings(config_path: str) -> dict:
-    """Load global settings from YAML. Supports SV_DB_PASSWORD env var override."""
+    """Load global settings from YAML. DB credentials come from .env file."""
     path = Path(config_path)
     if not path.exists():
         raise FileNotFoundError(f"Settings config not found: {config_path}")
 
+    # Load .env into os.environ (project root is one level up from config/)
+    _load_dotenv(path.resolve().parent.parent)
+
     with open(path, "r") as f:
         settings = yaml.safe_load(f)
 
-    # Allow env var override for DB password
-    env_password = os.environ.get("SV_DB_PASSWORD")
-    if env_password:
-        settings.setdefault("database", {})["password"] = env_password
+    # Override DB settings from environment variables (.env or real env)
+    db = settings.setdefault("database", {})
+    if os.environ.get("DB_HOST"):
+        db["host"] = os.environ["DB_HOST"]
+    if os.environ.get("DB_PORT"):
+        db["port"] = int(os.environ["DB_PORT"])
+    if os.environ.get("DB_USER"):
+        db["user"] = os.environ["DB_USER"]
+    if os.environ.get("DB_PASSWORD"):
+        db["password"] = os.environ["DB_PASSWORD"]
+    if os.environ.get("DB_NAME"):
+        db["database"] = os.environ["DB_NAME"]
 
     return settings
 
