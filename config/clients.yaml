@@ -6,6 +6,11 @@ clients:
     competitors:
       - "Digital Edge"
       - "Digital Real Estate"
+      - "Equinix"
+      - "QTS Realty"
+      - "CyrusOne"
+      - "CoreSite"
+      - "Flexential"
     sources:
       - name: "Data Center Dynamics (DCD)"
         type: rss
@@ -16,9 +21,24 @@ clients:
       - name: "TechTarget SearchDataCenter"
         type: rss
         url: "https://www.techtarget.com/searchdatacenter/rss"
+      - name: "Data Center Frontier"
+        type: rss
+        url: "https://www.datacenterfrontier.com/feed"
       - name: "Google News - Cologix"
         type: search
         url: "https://news.google.com/rss/search?q=Cologix"
+      - name: "Google News - Data Center Energy"
+        type: search
+        url: "https://news.google.com/rss/search?q=%22data+center%22+energy+consumption"
+      - name: "Google News - Data Center Environment"
+        type: search
+        url: "https://news.google.com/rss/search?q=%22data+center%22+environmental+impact"
+      - name: "Google News - Data Center Water"
+        type: search
+        url: "https://news.google.com/rss/search?q=%22data+center%22+water+usage"
+      - name: "Google News - Data Center Opposition"
+        type: search
+        url: "https://news.google.com/rss/search?q=%22data+center%22+opposition+OR+protest+OR+residents"
   - name: "Janus International"
     industries:
       - "Self‑storage"
