@@ -3,7 +3,7 @@
  * Sentiment Vision - Cron Runner (PHP wrapper)
  *
  * Use this for shared hosts where cron only supports PHP commands:
- *   /usr/local/bin/php /home/charle22/public_html/tools.veerl.es/dev/sentiment_vision/cron.php
+ *   /usr/local/bin/php /home/charle22/public_html/tools.veerl.es/apps/sentiment-vision/cron.php
  *
  * This script discovers the Python virtualenv and runs the gatherer.
  * Output goes to logs/cron.log.
@@ -33,10 +33,10 @@ file_put_contents($log_file, "\n=== Cron run: $timestamp ===\n", FILE_APPEND);
 // GreenGeeks/cPanel typically puts virtualenvs here:
 $possible_venvs = [
     // cPanel Setup Python App default locations
-    "/home/charle22/virtualenv/tools.veerl.es/dev/sentiment_vision/3.13",
-    "/home/charle22/virtualenv/tools.veerl.es/dev/sentiment_vision/3.12",
-    "/home/charle22/virtualenv/tools.veerl.es/dev/sentiment_vision/3.11",
-    "/home/charle22/virtualenv/tools.veerl.es/dev/sentiment_vision/3.10",
+    "/home/charle22/virtualenv/tools.veerl.es/apps/sentiment-vision/3.13",
+    "/home/charle22/virtualenv/tools.veerl.es/apps/sentiment-vision/3.12",
+    "/home/charle22/virtualenv/tools.veerl.es/apps/sentiment-vision/3.11",
+    "/home/charle22/virtualenv/tools.veerl.es/apps/sentiment-vision/3.10",
     // Local venv in project
     "$project_dir/venv",
 ];
