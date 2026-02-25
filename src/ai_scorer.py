@@ -20,20 +20,43 @@ _ai_disabled = False
 _session_ai_calls = 0
 _session_estimated_cost = 0.0
 
-SYSTEM_PROMPT = """You are a media sentiment analyst for PR and reputation monitoring. \
-You evaluate news articles from the perspective of a specific company to determine \
-if the coverage is positive, negative, or neutral FOR THAT COMPANY.
+SYSTEM_PROMPT = """You are a media sentiment analyst for PR and reputation monitoring.
 
-Respond with ONLY a JSON object: {"score": <float from -1.0 to 1.0>, "rationale": "<one sentence>"}
+You will be given:
+- A client company name and their industry
+- A list of their competitors
+- A news article
+
+Your job:
+1. Identify who or what the article is ACTUALLY about (it may be about the client, \
+a competitor, the broader industry, or an unrelated entity).
+2. Score the article's sentiment impact on the CLIENT COMPANY on a scale of -1.0 to 1.0.
+
+IMPORTANT: Do NOT assume the article is about the client. Many articles will be about \
+competitors or industry trends. Your rationale must accurately state who the article \
+is about.
+
+Respond with ONLY a JSON object: {"score": <float>, "rationale": "<one sentence>"}
 
 Scoring guide:
-- Positive (0.3 to 1.0): Article portrays the company/industry favorably, announces \
-growth, wins, partnerships, or positive trends benefiting them.
-- Neutral (-0.1 to 0.1): Article mentions the company/industry in passing or is \
-purely factual with no clear positive or negative implication.
-- Negative (-1.0 to -0.3): Article covers regulatory threats, lawsuits, environmental \
-concerns, operational failures, community opposition, or competitive losses.
-- Mild positive/negative (0.1 to 0.3 / -0.3 to -0.1): Indirect or minor impact."""
+- Positive (0.3 to 1.0): Directly benefits the client — favorable coverage, growth, \
+wins, partnerships.
+- Mild positive (0.1 to 0.3): Indirectly positive — industry tailwinds, competitor \
+struggles that may benefit client.
+- Neutral (-0.1 to 0.1): No clear impact on the client, or purely factual industry \
+reporting.
+- Mild negative (-0.3 to -0.1): Indirectly negative — industry headwinds, regulatory \
+trends that could affect client.
+- Negative (-1.0 to -0.3): Directly harms the client — negative coverage, regulatory \
+threats, lawsuits, opposition, operational failures.
+
+Rationale examples:
+- "This article about CyrusOne downsizing its Yorkville data center could benefit \
+Cologix by reducing local competition."
+- "The article covers new EPA regulations on data center water usage, posing \
+compliance risks for Cologix."
+- "Cologix announced a new partnership with AWS, signaling growth and market \
+confidence.\""""
 
 
 def _get_client():
@@ -124,13 +147,15 @@ def score_with_ai(
     title = article_row.get("title", "Untitled")
     client_name = client_context.get("name", "Unknown")
     industries = client_context.get("industries", [])
+    competitors = client_context.get("competitors", [])
 
     user_message = (
-        f"Company: {client_name}\n"
-        f"Industry: {', '.join(industries)}\n\n"
+        f"Client company: {client_name}\n"
+        f"Industry: {', '.join(industries)}\n"
+        f"Competitors: {', '.join(competitors) if competitors else 'N/A'}\n\n"
         f"Article title: {title}\n\n"
         f"Article text (first {max_words} words):\n{truncated}\n\n"
-        f"Score this article's sentiment FROM {client_name}'s PERSPECTIVE."
+        f"Score this article's sentiment impact on {client_name}."
     )
 
     try:

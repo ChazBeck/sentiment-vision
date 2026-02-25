@@ -183,7 +183,8 @@ def analyze_unscored(conn, settings: dict) -> int:
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
         """SELECT a.id, a.title, a.content_text, a.client_id,
-                  c.name AS client_name, c.industries AS client_industries
+                  c.name AS client_name, c.industries AS client_industries,
+                  c.competitors AS client_competitors
            FROM articles a
            JOIN clients c ON a.client_id = c.id
            WHERE a.sentiment_score IS NULL
@@ -214,9 +215,13 @@ def analyze_unscored(conn, settings: dict) -> int:
             industries = row.get("client_industries", "[]")
             if isinstance(industries, str):
                 industries = json.loads(industries)
+            competitors = row.get("client_competitors", "[]")
+            if isinstance(competitors, str):
+                competitors = json.loads(competitors)
             client_context = {
                 "name": row.get("client_name", "Unknown"),
                 "industries": industries,
+                "competitors": competitors,
             }
 
             result = score_article(row, settings, client_context=client_context)
