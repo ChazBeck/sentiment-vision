@@ -116,7 +116,7 @@ def score_with_ai(
         return None
 
     max_words = ai_cfg.get("max_words", 500)
-    model = ai_cfg.get("model", "claude-haiku-4-20250514")
+    model = ai_cfg.get("model", "claude-haiku-4-5-20251001")
     max_tokens = ai_cfg.get("max_tokens", 100)
     temperature = ai_cfg.get("temperature", 0)
 
@@ -178,6 +178,12 @@ def score_with_ai(
         if err_type == "AuthenticationError":
             logger.error(
                 "Invalid ANTHROPIC_API_KEY -- AI scoring disabled for this run"
+            )
+            _ai_disabled = True
+        elif err_type in ("BadRequestError", "NotFoundError"):
+            # Billing errors, invalid model, etc. — disable to avoid log spam
+            logger.error(
+                f"Claude API error ({err_type}): {e} -- AI scoring disabled for this run"
             )
             _ai_disabled = True
         elif err_type == "RateLimitError":
