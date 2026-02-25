@@ -52,3 +52,4 @@ if ($db->connect_error) {
     die('DB connection failed: ' . htmlspecialchars($db->connect_error));
 }
 $db->set_charset('utf8mb4');
+$db->query("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");

@@ -41,7 +41,7 @@ clients:
         url: "https://news.google.com/rss/search?q=%22data+center%22+opposition+OR+protest+OR+residents"
   - name: "Janus International"
     industries:
-      - "Self‑storage"
+      - "Self-storage"
       - "Storage"
     competitors:
       - "DBCI"
