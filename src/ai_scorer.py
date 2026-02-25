@@ -36,7 +36,7 @@ IMPORTANT: Do NOT assume the article is about the client. Many articles will be 
 competitors or industry trends. Your rationale must accurately state who the article \
 is about.
 
-Respond with ONLY a JSON object: {"score": <float>, "rationale": "<brief sentence, max 15 words>"}
+Respond with ONLY a JSON object: {"score": <float>, "rationale": "<one sentence>"}
 
 Scoring guide:
 - Positive (0.3 to 1.0): Directly benefits the client — favorable coverage, growth, \
@@ -94,10 +94,6 @@ def _parse_ai_response(response_text: str, settings: dict):
         label = score_label(score, settings)
 
         rationale = data.get("rationale", "")
-        # Enforce brevity — truncate if model was verbose
-        words = rationale.split()
-        if len(words) > 30:
-            rationale = " ".join(words[:25]) + "..."
         if rationale:
             logger.debug(f"  AI rationale: {rationale}")
 
@@ -141,7 +137,7 @@ def score_with_ai(
 
     max_words = ai_cfg.get("max_words", 500)
     model = ai_cfg.get("model", "claude-haiku-4-5-20251001")
-    max_tokens = ai_cfg.get("max_tokens", 60)
+    max_tokens = ai_cfg.get("max_tokens", 100)
     temperature = ai_cfg.get("temperature", 0)
 
     truncated = _truncate_for_api(text, max_words)
