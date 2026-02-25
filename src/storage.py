@@ -148,6 +148,12 @@ MIGRATION_SQL = [
     "ALTER TABLE articles ADD COLUMN media_tier TINYINT NOT NULL DEFAULT 3",
     "ALTER TABLE articles ADD COLUMN score_method ENUM('vader', 'ai') DEFAULT 'vader'",
     "ALTER TABLE articles ADD COLUMN sentiment_rationale TEXT NULL",
+    "ALTER TABLE clients CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci",
+    "ALTER TABLE sources CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci",
+    "ALTER TABLE articles CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci",
+    "ALTER TABLE fetch_log CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci",
+    "ALTER TABLE tags CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci",
+    "ALTER TABLE article_tags CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci",
 ]
 
 
