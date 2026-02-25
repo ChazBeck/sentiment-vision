@@ -494,6 +494,11 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
                                     else { $bc = 'badge-red'; }
                                 ?>
                                 <span class="badge <?= $bc ?>"><?= round($sc, 2) ?></span>
+                                <?php if (!empty($a['sentiment_rationale'])): ?>
+                                    <div style="font-size:11px; color:#6c757d; font-style:italic; margin-top:4px; max-width:260px; line-height:1.3;">
+                                        <?= htmlspecialchars($a['sentiment_rationale']) ?>
+                                    </div>
+                                <?php endif; ?>
                             <?php else: ?>
                                 <span style="color:#cbd5e1;">—</span>
                             <?php endif; ?>
@@ -581,6 +586,11 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
                                     else { $bc = 'badge-red'; }
                                 ?>
                                 <span class="badge <?= $bc ?>"><?= round($sc, 2) ?></span>
+                                <?php if (!empty($a['sentiment_rationale'])): ?>
+                                    <div style="font-size:11px; color:#6c757d; font-style:italic; margin-top:4px; max-width:260px; line-height:1.3;">
+                                        <?= htmlspecialchars($a['sentiment_rationale']) ?>
+                                    </div>
+                                <?php endif; ?>
                             <?php else: ?>
                                 <span style="color:#cbd5e1;">—</span>
                             <?php endif; ?>

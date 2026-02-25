@@ -151,6 +151,7 @@ def score_article(article_row: dict, settings: dict, client_context: dict = None
                 return {
                     "sentiment_score": round(ai_result["sentiment_score"], 4),
                     "sentiment_label": ai_result["sentiment_label"],
+                    "sentiment_rationale": ai_result.get("sentiment_rationale", ""),
                     "score_method": "ai",
                     "analyzed_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
                 }
@@ -164,6 +165,7 @@ def score_article(article_row: dict, settings: dict, client_context: dict = None
     return {
         "sentiment_score": round(vader_score, 4),
         "sentiment_label": vader_label,
+        "sentiment_rationale": "",
         "score_method": "vader",
         "analyzed_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
     }
@@ -223,12 +225,14 @@ def analyze_unscored(conn, settings: dict) -> int:
                 """UPDATE articles
                    SET sentiment_score = %s,
                        sentiment_label = %s,
+                       sentiment_rationale = %s,
                        score_method = %s,
                        analyzed_at = %s
                    WHERE id = %s""",
                 (
                     result["sentiment_score"],
                     result["sentiment_label"],
+                    result.get("sentiment_rationale", ""),
                     result["score_method"],
                     result["analyzed_at"],
                     row["id"],

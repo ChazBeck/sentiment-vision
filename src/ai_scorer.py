@@ -77,7 +77,7 @@ def _parse_ai_response(response_text: str, settings: dict):
         if rationale:
             logger.debug(f"  AI rationale: {rationale}")
 
-        return (round(score, 4), label)
+        return (round(score, 4), label, rationale)
     except (json.JSONDecodeError, KeyError, ValueError, TypeError) as e:
         logger.warning(
             f"Failed to parse AI response: {e} | Raw: {response_text[:200]}"
@@ -157,7 +157,7 @@ def score_with_ai(
         if parsed is None:
             return None
 
-        score, label = parsed
+        score, label, rationale = parsed
         logger.debug(
             f"  AI scored article {article_row.get('id')}: {score} ({label}) "
             f"[{input_tokens}+{output_tokens} tokens, ${est_cost:.5f}]"
@@ -165,6 +165,7 @@ def score_with_ai(
         return {
             "sentiment_score": score,
             "sentiment_label": label,
+            "sentiment_rationale": rationale,
             "score_method": "ai",
         }
 

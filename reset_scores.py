@@ -33,7 +33,7 @@ conn = mysql.connector.connect(
 cursor = conn.cursor()
 cursor.execute(
     "UPDATE articles SET sentiment_score = NULL, sentiment_label = NULL, "
-    "score_method = NULL, analyzed_at = NULL"
+    "sentiment_rationale = NULL, score_method = NULL, analyzed_at = NULL"
 )
 count = cursor.rowcount
 conn.commit()

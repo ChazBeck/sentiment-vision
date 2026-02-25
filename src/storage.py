@@ -82,6 +82,7 @@ SCHEMA_SQL = [
         esg_tags        JSON,
         esg_score       FLOAT,
         analyzed_at     DATETIME,
+        sentiment_rationale TEXT,
         tags            JSON,
         FOREIGN KEY (client_id) REFERENCES clients(id),
         FOREIGN KEY (source_id) REFERENCES sources(id),
@@ -146,6 +147,7 @@ MIGRATION_SQL = [
     "ALTER TABLE sources ADD COLUMN is_global TINYINT NOT NULL DEFAULT 0",
     "ALTER TABLE articles ADD COLUMN media_tier TINYINT NOT NULL DEFAULT 3",
     "ALTER TABLE articles ADD COLUMN score_method ENUM('vader', 'ai') DEFAULT 'vader'",
+    "ALTER TABLE articles ADD COLUMN sentiment_rationale TEXT NULL",
 ]
 
 
