@@ -1,8 +1,8 @@
-"""Reset neutral-scored articles so they can be re-scored by AI.
+"""Reset ALL article scores so they can be re-scored by AI.
 
 Usage (on server):
     source venv/bin/activate
-    python3 reset_neutral.py
+    python3 reset_scores.py
 """
 
 import os
@@ -33,11 +33,11 @@ conn = mysql.connector.connect(
 cursor = conn.cursor()
 cursor.execute(
     "UPDATE articles SET sentiment_score = NULL, sentiment_label = NULL, "
-    "score_method = NULL, analyzed_at = NULL WHERE sentiment_label = 'neutral'"
+    "score_method = NULL, analyzed_at = NULL"
 )
 count = cursor.rowcount
 conn.commit()
 cursor.close()
 conn.close()
 
-print(f"Reset {count} neutral articles. Run 'python3 -m src.main --analyze-only --verbose' to re-score them.")
+print(f"Reset {count} articles. Run 'python3 -m src.main --analyze-only --verbose' to re-score them.")

@@ -29,7 +29,7 @@ sentiment:
     max_words: 500                    # Truncate article text sent to API
     max_tokens: 100                   # Max response tokens from Claude
     temperature: 0                    # Deterministic scoring
-    monthly_budget_usd: 3.0           # Soft cap — logs warning when exceeded
+    monthly_budget_usd: 10.0          # Soft cap — logs warning when exceeded
 
 logging:
   level: "INFO"

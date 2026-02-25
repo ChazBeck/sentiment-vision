@@ -1,10 +1,10 @@
 """
-Sentiment analysis module — VADER + Claude AI hybrid.
+Sentiment analysis module — Claude AI primary, VADER fallback.
 
 Scores articles on a -1.0 (negative) to +1.0 (positive) scale.
-VADER handles clear-positive and clear-negative articles for free.
-Articles in the neutral zone are escalated to Claude Haiku for
-context-aware scoring from the client's perspective.
+When AI scoring is enabled, ALL articles go through Claude Haiku
+for context-aware scoring from the client's perspective.
+VADER is used as a fallback when AI is disabled or fails.
 """
 
 import json
@@ -124,12 +124,10 @@ def score_label(score: float, settings: dict) -> str:
 
 def score_article(article_row: dict, settings: dict, client_context: dict = None) -> dict:
     """
-    Score a single article using hybrid VADER + AI approach.
+    Score a single article — AI primary, VADER fallback.
 
-    1. Always runs VADER first (free, instant).
-    2. If the VADER score falls in the neutral zone AND AI scoring is enabled,
-       escalates to Claude Haiku for context-aware re-scoring.
-    3. Falls back to VADER if AI scoring fails for any reason.
+    1. If AI scoring is enabled AND client_context is provided, send to Claude.
+    2. If AI fails or is disabled, fall back to VADER.
 
     Returns dict with sentiment_score, sentiment_label, score_method, analyzed_at.
     """
@@ -142,36 +140,31 @@ def score_article(article_row: dict, settings: dict, client_context: dict = None
             "analyzed_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
         }
 
-    # Step 1: VADER scoring (always runs)
-    vader_score = score_text(text)
-    vader_label = score_label(vader_score, settings)
-
-    final_score = vader_score
-    final_label = vader_label
-    score_method = "vader"
-
-    # Step 2: Check if AI escalation is warranted
+    # Try AI scoring first when enabled
     ai_cfg = settings.get("sentiment", {}).get("ai_scoring", {})
-    pos_threshold = settings.get("sentiment", {}).get("positive_threshold", 0.2)
-    neg_threshold = settings.get("sentiment", {}).get("negative_threshold", -0.2)
-    in_neutral_zone = neg_threshold <= vader_score < pos_threshold
-
-    if in_neutral_zone and ai_cfg.get("enabled") and client_context:
+    if ai_cfg.get("enabled") and client_context:
         try:
             from .ai_scorer import score_with_ai
 
             ai_result = score_with_ai(article_row, client_context, settings)
             if ai_result:
-                final_score = ai_result["sentiment_score"]
-                final_label = ai_result["sentiment_label"]
-                score_method = "ai"
+                return {
+                    "sentiment_score": round(ai_result["sentiment_score"], 4),
+                    "sentiment_label": ai_result["sentiment_label"],
+                    "score_method": "ai",
+                    "analyzed_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
+                }
         except ImportError:
-            pass  # anthropic not installed, stay with VADER
+            pass  # anthropic not installed, fall through to VADER
+
+    # Fallback: VADER scoring
+    vader_score = score_text(text)
+    vader_label = score_label(vader_score, settings)
 
     return {
-        "sentiment_score": round(final_score, 4),
-        "sentiment_label": final_label,
-        "score_method": score_method,
+        "sentiment_score": round(vader_score, 4),
+        "sentiment_label": vader_label,
+        "score_method": "vader",
         "analyzed_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
     }
 
@@ -206,7 +199,7 @@ def analyze_unscored(conn, settings: dict) -> int:
     ai_enabled = settings.get("sentiment", {}).get("ai_scoring", {}).get("enabled", False)
     logger.info(
         f"Scoring {len(rows)} unscored articles"
-        f"{' (AI hybrid enabled)' if ai_enabled else ''}"
+        f"{' (AI scoring enabled)' if ai_enabled else ' (VADER only)'}"
     )
     scored_count = 0
     ai_count = 0
