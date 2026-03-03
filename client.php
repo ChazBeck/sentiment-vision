@@ -28,6 +28,27 @@ $industries = json_decode($client['industries'], true) ?: [];
 $competitors = json_decode($client['competitors'], true) ?: [];
 
 // ---------------------------------------------------------------------------
+// Date range filter
+// ---------------------------------------------------------------------------
+$start_date = isset($_GET['start_date']) && $_GET['start_date'] !== '' ? $_GET['start_date'] : '';
+$end_date = isset($_GET['end_date']) && $_GET['end_date'] !== '' ? $_GET['end_date'] : '';
+
+// Build date filter conditions
+$date_cond = '';
+$date_params = [];
+$date_types = '';
+if ($start_date !== '') {
+    $date_cond .= " AND a.published_date >= ?";
+    $date_params[] = $start_date;
+    $date_types .= 's';
+}
+if ($end_date !== '') {
+    $date_cond .= " AND a.published_date <= ?";
+    $date_params[] = $end_date;
+    $date_types .= 's';
+}
+
+// ---------------------------------------------------------------------------
 // Media tier toggle filter
 // ---------------------------------------------------------------------------
 $active_tiers = [1, 2, 3, 4]; // default: all
@@ -47,7 +68,8 @@ $tier_cond = " AND a.media_tier IN ($tier_in)";
 $tier_weight_sql = "CASE a.media_tier WHEN 1 THEN 3.0 WHEN 2 THEN 2.0 WHEN 3 THEN 1.0 WHEN 4 THEN 0.5 ELSE 1.0 END";
 
 // 1) Company Sentiment — weighted avg of articles that mention the client name
-$company_stmt = $db->prepare("
+$company_like = '%' . $client['name'] . '%';
+$company_sql = "
     SELECT SUM(sentiment_score * $tier_weight_sql) / SUM($tier_weight_sql) AS avg_score,
            COUNT(*) AS total,
            SUM(CASE WHEN sentiment_score IS NOT NULL THEN 1 ELSE 0 END) AS scored,
@@ -59,9 +81,12 @@ $company_stmt = $db->prepare("
       AND a.sentiment_score IS NOT NULL
       AND (a.title LIKE ? OR a.content_text LIKE ?)
       AND a.media_tier IN ($tier_in)
-");
-$company_like = '%' . $client['name'] . '%';
-$company_stmt->bind_param('iss', $client_id, $company_like, $company_like);
+      $date_cond
+";
+$company_stmt = $db->prepare($company_sql);
+$company_params = array_merge([$client_id, $company_like, $company_like], $date_params);
+$company_types = 'iss' . $date_types;
+$company_stmt->bind_param($company_types, ...$company_params);
 $company_stmt->execute();
 $company_sent = $company_stmt->get_result()->fetch_assoc();
 
@@ -88,7 +113,10 @@ if (!empty($industries)) {
         FROM articles a
         WHERE a.client_id = ? AND a.sentiment_score IS NOT NULL AND $industry_where
               AND a.media_tier IN ($tier_in)
+              $date_cond
     ";
+    $industry_params = array_merge($industry_params, $date_params);
+    $industry_types .= $date_types;
     $ind_stmt = $db->prepare($industry_sql);
     $ind_stmt->bind_param($industry_types, ...$industry_params);
     $ind_stmt->execute();
@@ -118,7 +146,10 @@ if (!empty($competitors)) {
         FROM articles a
         WHERE a.client_id = ? AND a.sentiment_score IS NOT NULL AND $comp_where
               AND a.media_tier IN ($tier_in)
+              $date_cond
     ";
+    $comp_params = array_merge($comp_params, $date_params);
+    $comp_types .= $date_types;
     $comp_stmt = $db->prepare($comp_sql);
     $comp_stmt->bind_param($comp_types, ...$comp_params);
     $comp_stmt->execute();
@@ -148,50 +179,66 @@ if ($filter !== 'all') {
 }
 
 // --- Group 1: Client Articles (mention client name) ---
-$g1_where = "a.client_id = ? AND (a.title LIKE ? OR COALESCE(a.content_text, '') LIKE ?)" . $tier_cond . $sentiment_cond;
+$g1_where = "a.client_id = ? AND (a.title LIKE ? OR COALESCE(a.content_text, '') LIKE ?)" . $tier_cond . $sentiment_cond . $date_cond;
 
 $g1_count_sql = "SELECT COUNT(*) AS cnt FROM articles a WHERE $g1_where";
 $g1_count_stmt = $db->prepare($g1_count_sql);
+$g1_count_params = [$client_id, $company_like, $company_like];
+$g1_count_types = 'iss';
 if ($filter !== 'all') {
-    $g1_count_stmt->bind_param('isss', $client_id, $company_like, $company_like, $sentiment_param);
-} else {
-    $g1_count_stmt->bind_param('iss', $client_id, $company_like, $company_like);
+    $g1_count_params[] = $sentiment_param;
+    $g1_count_types .= 's';
 }
+$g1_count_params = array_merge($g1_count_params, $date_params);
+$g1_count_types .= $date_types;
+$g1_count_stmt->bind_param($g1_count_types, ...$g1_count_params);
 $g1_count_stmt->execute();
 $g1_total = $g1_count_stmt->get_result()->fetch_assoc()['cnt'];
 $g1_total_pages = max(1, ceil($g1_total / $per_page));
 
 $g1_sql = "SELECT a.*, s.name AS source_name FROM articles a LEFT JOIN sources s ON a.source_id = s.id WHERE $g1_where ORDER BY a.fetched_at DESC LIMIT ? OFFSET ?";
 $g1_stmt = $db->prepare($g1_sql);
+$g1_params = [$client_id, $company_like, $company_like];
+$g1_types = 'iss';
 if ($filter !== 'all') {
-    $g1_stmt->bind_param('isssii', $client_id, $company_like, $company_like, $sentiment_param, $per_page, $client_offset);
-} else {
-    $g1_stmt->bind_param('issii', $client_id, $company_like, $company_like, $per_page, $client_offset);
+    $g1_params[] = $sentiment_param;
+    $g1_types .= 's';
 }
+$g1_params = array_merge($g1_params, $date_params, [$per_page, $client_offset]);
+$g1_types .= $date_types . 'ii';
+$g1_stmt->bind_param($g1_types, ...$g1_params);
 $g1_stmt->execute();
 $g1_articles = $g1_stmt->get_result();
 
 // --- Group 2: Industry/Competitor Articles (do NOT mention client name) ---
-$g2_where = "a.client_id = ? AND NOT (a.title LIKE ? OR COALESCE(a.content_text, '') LIKE ?)" . $tier_cond . $sentiment_cond;
+$g2_where = "a.client_id = ? AND NOT (a.title LIKE ? OR COALESCE(a.content_text, '') LIKE ?)" . $tier_cond . $sentiment_cond . $date_cond;
 
 $g2_count_sql = "SELECT COUNT(*) AS cnt FROM articles a WHERE $g2_where";
 $g2_count_stmt = $db->prepare($g2_count_sql);
+$g2_count_params = [$client_id, $company_like, $company_like];
+$g2_count_types = 'iss';
 if ($filter !== 'all') {
-    $g2_count_stmt->bind_param('isss', $client_id, $company_like, $company_like, $sentiment_param);
-} else {
-    $g2_count_stmt->bind_param('iss', $client_id, $company_like, $company_like);
+    $g2_count_params[] = $sentiment_param;
+    $g2_count_types .= 's';
 }
+$g2_count_params = array_merge($g2_count_params, $date_params);
+$g2_count_types .= $date_types;
+$g2_count_stmt->bind_param($g2_count_types, ...$g2_count_params);
 $g2_count_stmt->execute();
 $g2_total = $g2_count_stmt->get_result()->fetch_assoc()['cnt'];
 $g2_total_pages = max(1, ceil($g2_total / $per_page));
 
 $g2_sql = "SELECT a.*, s.name AS source_name FROM articles a LEFT JOIN sources s ON a.source_id = s.id WHERE $g2_where ORDER BY a.fetched_at DESC LIMIT ? OFFSET ?";
 $g2_stmt = $db->prepare($g2_sql);
+$g2_params = [$client_id, $company_like, $company_like];
+$g2_types = 'iss';
 if ($filter !== 'all') {
-    $g2_stmt->bind_param('isssii', $client_id, $company_like, $company_like, $sentiment_param, $per_page, $industry_offset);
-} else {
-    $g2_stmt->bind_param('issii', $client_id, $company_like, $company_like, $per_page, $industry_offset);
+    $g2_params[] = $sentiment_param;
+    $g2_types .= 's';
 }
+$g2_params = array_merge($g2_params, $date_params, [$per_page, $industry_offset]);
+$g2_types .= $date_types . 'ii';
+$g2_stmt->bind_param($g2_types, ...$g2_params);
 $g2_stmt->execute();
 $g2_articles = $g2_stmt->get_result();
 
@@ -220,7 +267,7 @@ function gauge_data($score) {
 
 function client_url($client_id, $overrides = []) {
     $params = ['id' => $client_id];
-    foreach (['filter', 'cp', 'ip', 'tiers'] as $key) {
+    foreach (['filter', 'cp', 'ip', 'tiers', 'start_date', 'end_date'] as $key) {
         if (isset($_GET[$key])) {
             $params[$key] = $_GET[$key];
         }
@@ -236,6 +283,8 @@ function client_url($client_id, $overrides = []) {
     if (isset($params['filter']) && $params['filter'] === 'all') unset($params['filter']);
     if (isset($params['cp']) && $params['cp'] <= 1) unset($params['cp']);
     if (isset($params['ip']) && $params['ip'] <= 1) unset($params['ip']);
+    if (isset($params['start_date']) && $params['start_date'] === '') unset($params['start_date']);
+    if (isset($params['end_date']) && $params['end_date'] === '') unset($params['end_date']);
     // Omit tiers param when all 4 are active (default state)
     if (isset($params['tiers'])) {
         $t = array_map('intval', explode(',', $params['tiers']));
@@ -421,6 +470,23 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
             <?php endif; ?>
         </div>
         <?php endforeach; ?>
+    </div>
+
+    <!-- Date Range Filter -->
+    <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <span style="font-size: 13px; font-weight: 600; color: #6c757d;">Date Range:</span>
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #6c757d;">
+            <span>Start:</span>
+            <input type="date" id="start-date" value="<?= htmlspecialchars($start_date) ?>" 
+                   style="padding: 6px 10px; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 13px;">
+        </label>
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #6c757d;">
+            <span>End:</span>
+            <input type="date" id="end-date" value="<?= htmlspecialchars($end_date) ?>" 
+                   style="padding: 6px 10px; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 13px;">
+        </label>
+        <button id="apply-dates" style="padding: 6px 16px; background: #E58325; color: #fff; border: none; border-radius: 4px; font-size: 13px; font-weight: 500; cursor: pointer;">Apply</button>
+        <button id="clear-dates" style="padding: 6px 16px; background: #fff; color: #6c757d; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 13px; font-weight: 500; cursor: pointer;">Clear</button>
     </div>
 
     <!-- Media Tier Toggles -->
@@ -630,6 +696,54 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
 <footer>Sentiment Vision &middot; <?= htmlspecialchars($client['name']) ?></footer>
 
 <script>
+// Date filter handling
+document.getElementById('apply-dates').addEventListener('click', function() {
+    var params = new URLSearchParams(window.location.search);
+    var startDate = document.getElementById('start-date').value;
+    var endDate = document.getElementById('end-date').value;
+    
+    if (startDate) {
+        params.set('start_date', startDate);
+    } else {
+        params.delete('start_date');
+    }
+    
+    if (endDate) {
+        params.set('end_date', endDate);
+    } else {
+        params.delete('end_date');
+    }
+    
+    // Reset pagination when dates change
+    params.delete('cp');
+    params.delete('ip');
+    
+    window.location.search = params.toString();
+});
+
+document.getElementById('clear-dates').addEventListener('click', function() {
+    var params = new URLSearchParams(window.location.search);
+    params.delete('start_date');
+    params.delete('end_date');
+    params.delete('cp');
+    params.delete('ip');
+    window.location.search = params.toString();
+});
+
+// Allow Enter key to apply dates
+document.getElementById('start-date').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        document.getElementById('apply-dates').click();
+    }
+});
+
+document.getElementById('end-date').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        document.getElementById('apply-dates').click();
+    }
+});
+
+// Tier filter handling
 document.querySelectorAll('.tier-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
         var tier = parseInt(this.getAttribute('data-tier'));
