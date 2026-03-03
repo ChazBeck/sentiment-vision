@@ -346,7 +346,8 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
     }
     td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
     tr:hover td { background: #f9fafb; }
-    .truncate { max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .title-cell { max-width: 400px; word-wrap: break-word; white-space: normal; line-height: 1.4; }
+    .sentiment-cell { min-width: 350px; max-width: 450px; }
 
     .pagination { display: flex; justify-content: center; gap: 8px; margin: 20px 0; }
     .pagination a, .pagination span {
@@ -531,10 +532,20 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
                 <?php else: ?>
                     <?php while ($a = $g1_articles->fetch_assoc()): ?>
                     <tr>
-                        <td class="truncate">
+                        <td class="title-cell">
                             <a href="index.php?view=<?= $a['id'] ?>"><?= htmlspecialchars($a['title'] ?: 'Untitled') ?></a>
                         </td>
-                        <td style="font-size:12px; color:#64748b;"><?= htmlspecialchars($a['source_name'] ?? 'N/A') ?></td>
+                        <td style="font-size:12px; color:#64748b;">
+                            <?= htmlspecialchars($a['source_name'] ?? 'N/A') ?>
+                            <?php if (!empty($a['url'])): ?>
+                                <?php 
+                                    $parsed = parse_url($a['url']);
+                                    $domain = isset($parsed['host']) ? $parsed['host'] : '';
+                                    $domain = preg_replace('/^www\./', '', $domain);
+                                ?>
+                                <div style="font-size:10px; color:#94a3b8; margin-top:2px;"><?= htmlspecialchars($domain) ?></div>
+                            <?php endif; ?>
+                        </td>
                         <td>
                             <?php
                                 $esg = json_decode($a['esg_tags'] ?? '', true) ?: [];
@@ -551,7 +562,7 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
                             ?>
                         </td>
                         <td><?= (int)$a['word_count'] ?></td>
-                        <td>
+                        <td class="sentiment-cell">
                             <?php if ($a['sentiment_score'] !== null): ?>
                                 <?php
                                     $sc = (float)$a['sentiment_score'];
@@ -561,7 +572,7 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
                                 ?>
                                 <span class="badge <?= $bc ?>"><?= round($sc, 2) ?></span>
                                 <?php if (!empty($a['sentiment_rationale'])): ?>
-                                    <div style="font-size:11px; color:#6c757d; font-style:italic; margin-top:4px; max-width:260px; line-height:1.3;">
+                                    <div style="font-size:11px; color:#6c757d; font-style:italic; margin-top:4px; line-height:1.4;">
                                         <?= htmlspecialchars($a['sentiment_rationale']) ?>
                                     </div>
                                 <?php endif; ?>
@@ -623,10 +634,20 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
                 <?php else: ?>
                     <?php while ($a = $g2_articles->fetch_assoc()): ?>
                     <tr>
-                        <td class="truncate">
+                        <td class="title-cell">
                             <a href="index.php?view=<?= $a['id'] ?>"><?= htmlspecialchars($a['title'] ?: 'Untitled') ?></a>
                         </td>
-                        <td style="font-size:12px; color:#64748b;"><?= htmlspecialchars($a['source_name'] ?? 'N/A') ?></td>
+                        <td style="font-size:12px; color:#64748b;">
+                            <?= htmlspecialchars($a['source_name'] ?? 'N/A') ?>
+                            <?php if (!empty($a['url'])): ?>
+                                <?php 
+                                    $parsed = parse_url($a['url']);
+                                    $domain = isset($parsed['host']) ? $parsed['host'] : '';
+                                    $domain = preg_replace('/^www\./', '', $domain);
+                                ?>
+                                <div style="font-size:10px; color:#94a3b8; margin-top:2px;"><?= htmlspecialchars($domain) ?></div>
+                            <?php endif; ?>
+                        </td>
                         <td>
                             <?php
                                 $esg = json_decode($a['esg_tags'] ?? '', true) ?: [];
@@ -643,7 +664,7 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
                             ?>
                         </td>
                         <td><?= (int)$a['word_count'] ?></td>
-                        <td>
+                        <td class="sentiment-cell">
                             <?php if ($a['sentiment_score'] !== null): ?>
                                 <?php
                                     $sc = (float)$a['sentiment_score'];
@@ -653,7 +674,7 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
                                 ?>
                                 <span class="badge <?= $bc ?>"><?= round($sc, 2) ?></span>
                                 <?php if (!empty($a['sentiment_rationale'])): ?>
-                                    <div style="font-size:11px; color:#6c757d; font-style:italic; margin-top:4px; max-width:260px; line-height:1.3;">
+                                    <div style="font-size:11px; color:#6c757d; font-style:italic; margin-top:4px; line-height:1.4;">
                                         <?= htmlspecialchars($a['sentiment_rationale']) ?>
                                     </div>
                                 <?php endif; ?>
