@@ -392,12 +392,79 @@ $db->close();
 
     <!-- Quick Setup -->
     <?php if (empty($global_tags)): ?>
-    <div class="card" style="text-align: center;">
-        <h3>Quick Setup</h3>
-        <p class="hint">Add the standard Environment, Social, and Governance tags with common keywords.</p>
-        <form method="post">
+    <div class="card">
+        <h3 style="text-align: center;">Quick Setup</h3>
+        <p class="hint" style="text-align: center;">Add the standard Environment, Social, and Governance tags with common keywords.</p>
+        
+        <div style="margin: 20px 0;">
+            <button type="button" class="btn btn-outline" onclick="toggleAccordion('default-tags-preview')" style="width: 100%;">
+                Preview 10 Default ESG Tags &#9662;
+            </button>
+        </div>
+        
+        <div id="default-tags-preview" class="accordion-body">
+            <div style="background: #f9fafb; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                <h4 style="font-size: 14px; font-weight: 600; color: #043546; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Environmental (3 tags)</h4>
+                <div style="display: grid; gap: 12px; margin-bottom: 20px;">
+                    <div style="background: #fff; padding: 12px; border-radius: 6px; border-left: 4px solid #16a34a;">
+                        <div style="font-weight: 600; color: #043546; margin-bottom: 4px;">Climate & Emissions</div>
+                        <div style="font-size: 11px; color: #6c757d;">climate change, greenhouse gas, GHG, carbon emissions, carbon footprint, carbon neutral, net zero, global warming, decarbonization, Paris agreement, climate risk, scope 1/2/3</div>
+                    </div>
+                    <div style="background: #fff; padding: 12px; border-radius: 6px; border-left: 4px solid #15803d;">
+                        <div style="font-weight: 600; color: #043546; margin-bottom: 4px;">Energy & Resources</div>
+                        <div style="font-size: 11px; color: #6c757d;">renewable energy, solar energy, wind energy, clean energy, energy efficiency, energy transition, fossil fuel, hydroelectric, geothermal, battery storage, electrification</div>
+                    </div>
+                    <div style="background: #fff; padding: 12px; border-radius: 6px; border-left: 4px solid #059669;">
+                        <div style="font-weight: 600; color: #043546; margin-bottom: 4px;">Environmental Mgmt</div>
+                        <div style="font-size: 11px; color: #6c757d;">waste management, recycling, water management, water scarcity, pollution, deforestation, biodiversity, sustainable building, LEED, circular economy, ocean pollution, plastic waste</div>
+                    </div>
+                </div>
+                
+                <h4 style="font-size: 14px; font-weight: 600; color: #043546; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Social (3 tags)</h4>
+                <div style="display: grid; gap: 12px; margin-bottom: 20px;">
+                    <div style="background: #fff; padding: 12px; border-radius: 6px; border-left: 4px solid #2563eb;">
+                        <div style="font-weight: 600; color: #043546; margin-bottom: 4px;">Workforce & Labor</div>
+                        <div style="font-size: 11px; color: #6c757d;">employee wellbeing, workplace safety, labor rights, human rights, fair wage, worker safety, employee benefits, talent retention, labor union, child labor, forced labor, working conditions</div>
+                    </div>
+                    <div style="background: #fff; padding: 12px; border-radius: 6px; border-left: 4px solid #3b82f6;">
+                        <div style="font-weight: 600; color: #043546; margin-bottom: 4px;">Diversity & Inclusion</div>
+                        <div style="font-size: 11px; color: #6c757d;">diversity, equity, inclusion, DEI, gender equality, pay gap, racial equity, equal opportunity, accessibility, disability inclusion, LGBTQ, women in leadership, minority, underrepresented</div>
+                    </div>
+                    <div style="background: #fff; padding: 12px; border-radius: 6px; border-left: 4px solid #0ea5e9;">
+                        <div style="font-weight: 600; color: #043546; margin-bottom: 4px;">Social Impact</div>
+                        <div style="font-size: 11px; color: #6c757d;">community engagement, stakeholder engagement, philanthropy, CSR, data privacy, customer privacy, cybersecurity, data breach, digital inclusion, disaster relief, public health, food security</div>
+                    </div>
+                </div>
+                
+                <h4 style="font-size: 14px; font-weight: 600; color: #043546; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Governance (2 tags)</h4>
+                <div style="display: grid; gap: 12px; margin-bottom: 20px;">
+                    <div style="background: #fff; padding: 12px; border-radius: 6px; border-left: 4px solid #9333ea;">
+                        <div style="font-weight: 600; color: #043546; margin-bottom: 4px;">Corporate Governance</div>
+                        <div style="font-size: 11px; color: #6c757d;">board of directors, board composition, board diversity, corporate governance, ESG governance, executive compensation, CEO pay, shareholder rights, proxy vote, independent director, succession planning</div>
+                    </div>
+                    <div style="background: #fff; padding: 12px; border-radius: 6px; border-left: 4px solid #7c3aed;">
+                        <div style="font-weight: 600; color: #043546; margin-bottom: 4px;">Ethics & Compliance</div>
+                        <div style="font-size: 11px; color: #6c757d;">business ethics, anti-corruption, bribery, corporate culture, compliance, whistleblower, responsible tax, tax transparency, supply chain, lobbying, regulatory compliance, sanctions, fraud, code of conduct, transparency, accountability</div>
+                    </div>
+                </div>
+                
+                <h4 style="font-size: 14px; font-weight: 600; color: #043546; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Other (2 tags)</h4>
+                <div style="display: grid; gap: 12px;">
+                    <div style="background: #fff; padding: 12px; border-radius: 6px; border-left: 4px solid #f59e0b;">
+                        <div style="font-weight: 600; color: #043546; margin-bottom: 4px;">Innovation & Digital</div>
+                        <div style="font-size: 11px; color: #6c757d;">digital transformation, innovation, R&D, artificial intelligence, AI, machine learning, automation, technology, customer satisfaction, reputation management, emerging technology, patent, intellectual property</div>
+                    </div>
+                    <div style="background: #fff; padding: 12px; border-radius: 6px; border-left: 4px solid #ef4444;">
+                        <div style="font-weight: 600; color: #043546; margin-bottom: 4px;">Responsible Finance</div>
+                        <div style="font-size: 11px; color: #6c757d;">impact investing, ESG investing, sustainable finance, green bond, responsible investment, long-term value, responsible lending, shareholder activism, divestment, sustainable development goals, SDG</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <form method="post" style="text-align: center; margin-top: 20px;">
             <input type="hidden" name="action" value="seed_defaults">
-            <button type="submit" class="btn btn-primary">Add Default ESG Tags</button>
+            <button type="submit" class="btn btn-primary">Add These 10 Default ESG Tags</button>
         </form>
     </div>
     <?php endif; ?>
