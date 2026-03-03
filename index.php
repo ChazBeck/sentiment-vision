@@ -109,7 +109,7 @@ if (!$article_detail) {
 <?php if ($article_detail): ?>
     <!-- Single Article View -->
     <div style="margin: 20px 0;">
-        <a href="index.php">&larr; Back to dashboard</a>
+        <a href="client.php?id=<?= $article_detail['client_id'] ?>">&larr; Back to Client</a>
     </div>
     <div class="article-detail">
         <h2><?= htmlspecialchars($article_detail['title'] ?: 'Untitled') ?></h2>
@@ -135,6 +135,12 @@ if (!$article_detail) {
             <p style="margin-bottom: 12px;">
                 Sentiment: <span class="badge <?= $bc ?>"><?= round($sc, 2) ?> &middot; <?= $sl ?></span>
             </p>
+            <?php if (!empty($article_detail['sentiment_rationale'])): ?>
+                <div style="background: #f9fafb; border-left: 3px solid <?= $sc >= 0.2 ? '#16a34a' : ($sc >= -0.2 ? '#eab308' : '#dc2626') ?>; padding: 12px 16px; border-radius: 4px; margin-bottom: 16px;">
+                    <div style="font-size: 11px; font-weight: 600; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Sentiment Reasoning</div>
+                    <div style="font-size: 13px; color: #374151; line-height: 1.5; font-style: italic;"><?= htmlspecialchars($article_detail['sentiment_rationale']) ?></div>
+                </div>
+            <?php endif; ?>
         <?php endif; ?>
         <?php
             $esg_tags = json_decode($article_detail['esg_tags'] ?? '', true) ?: [];

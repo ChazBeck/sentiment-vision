@@ -541,8 +541,20 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
                                     $parsed = parse_url($a['url']);
                                     $domain = isset($parsed['host']) ? $parsed['host'] : '';
                                     $domain = preg_replace('/^www\./', '', $domain);
-                                    // Format domain as publisher name (capitalize first letter of each part)
-                                    $publisher = ucwords(str_replace(['.com', '.org', '.net', '.io', '.co'], '', $domain));
+                                    
+                                    // For aggregators like Google News, extract publisher from title
+                                    $publisher = '';
+                                    if (strpos($domain, 'news.google') !== false && !empty($a['title'])) {
+                                        // Many aggregated articles have format "Title - Publisher"
+                                        if (preg_match('/ - ([^-]+)$/', $a['title'], $matches)) {
+                                            $publisher = trim($matches[1]);
+                                        }
+                                    }
+                                    
+                                    // Fallback to domain extraction
+                                    if (empty($publisher)) {
+                                        $publisher = ucwords(str_replace(['.com', '.org', '.net', '.io', '.co'], '', $domain));
+                                    }
                                 ?>
                                 <div style="font-weight: 600;"><?= htmlspecialchars($publisher) ?></div>
                                 <div style="font-size:10px; color:#94a3b8; margin-top:2px;">via <?= htmlspecialchars($a['source_name'] ?? 'RSS') ?></div>
@@ -647,8 +659,20 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
                                     $parsed = parse_url($a['url']);
                                     $domain = isset($parsed['host']) ? $parsed['host'] : '';
                                     $domain = preg_replace('/^www\./', '', $domain);
-                                    // Format domain as publisher name (capitalize first letter of each part)
-                                    $publisher = ucwords(str_replace(['.com', '.org', '.net', '.io', '.co'], '', $domain));
+                                    
+                                    // For aggregators like Google News, extract publisher from title
+                                    $publisher = '';
+                                    if (strpos($domain, 'news.google') !== false && !empty($a['title'])) {
+                                        // Many aggregated articles have format "Title - Publisher"
+                                        if (preg_match('/ - ([^-]+)$/', $a['title'], $matches)) {
+                                            $publisher = trim($matches[1]);
+                                        }
+                                    }
+                                    
+                                    // Fallback to domain extraction
+                                    if (empty($publisher)) {
+                                        $publisher = ucwords(str_replace(['.com', '.org', '.net', '.io', '.co'], '', $domain));
+                                    }
                                 ?>
                                 <div style="font-weight: 600;"><?= htmlspecialchars($publisher) ?></div>
                                 <div style="font-size:10px; color:#94a3b8; margin-top:2px;">via <?= htmlspecialchars($a['source_name'] ?? 'RSS') ?></div>
