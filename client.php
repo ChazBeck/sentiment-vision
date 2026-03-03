@@ -535,15 +535,19 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
                         <td class="title-cell">
                             <a href="index.php?view=<?= $a['id'] ?>"><?= htmlspecialchars($a['title'] ?: 'Untitled') ?></a>
                         </td>
-                        <td style="font-size:12px; color:#64748b;">
-                            <?= htmlspecialchars($a['source_name'] ?? 'N/A') ?>
+                        <td style="font-size:13px; color:#043546;">
                             <?php if (!empty($a['url'])): ?>
                                 <?php 
                                     $parsed = parse_url($a['url']);
                                     $domain = isset($parsed['host']) ? $parsed['host'] : '';
                                     $domain = preg_replace('/^www\./', '', $domain);
+                                    // Format domain as publisher name (capitalize first letter of each part)
+                                    $publisher = ucwords(str_replace(['.com', '.org', '.net', '.io', '.co'], '', $domain));
                                 ?>
-                                <div style="font-size:10px; color:#94a3b8; margin-top:2px;"><?= htmlspecialchars($domain) ?></div>
+                                <div style="font-weight: 600;"><?= htmlspecialchars($publisher) ?></div>
+                                <div style="font-size:10px; color:#94a3b8; margin-top:2px;">via <?= htmlspecialchars($a['source_name'] ?? 'RSS') ?></div>
+                            <?php else: ?>
+                                <?= htmlspecialchars($a['source_name'] ?? 'N/A') ?>
                             <?php endif; ?>
                         </td>
                         <td>
@@ -637,15 +641,19 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
                         <td class="title-cell">
                             <a href="index.php?view=<?= $a['id'] ?>"><?= htmlspecialchars($a['title'] ?: 'Untitled') ?></a>
                         </td>
-                        <td style="font-size:12px; color:#64748b;">
-                            <?= htmlspecialchars($a['source_name'] ?? 'N/A') ?>
+                        <td style="font-size:13px; color:#043546;">
                             <?php if (!empty($a['url'])): ?>
                                 <?php 
                                     $parsed = parse_url($a['url']);
                                     $domain = isset($parsed['host']) ? $parsed['host'] : '';
                                     $domain = preg_replace('/^www\./', '', $domain);
+                                    // Format domain as publisher name (capitalize first letter of each part)
+                                    $publisher = ucwords(str_replace(['.com', '.org', '.net', '.io', '.co'], '', $domain));
                                 ?>
-                                <div style="font-size:10px; color:#94a3b8; margin-top:2px;"><?= htmlspecialchars($domain) ?></div>
+                                <div style="font-weight: 600;"><?= htmlspecialchars($publisher) ?></div>
+                                <div style="font-size:10px; color:#94a3b8; margin-top:2px;">via <?= htmlspecialchars($a['source_name'] ?? 'RSS') ?></div>
+                            <?php else: ?>
+                                <?= htmlspecialchars($a['source_name'] ?? 'N/A') ?>
                             <?php endif; ?>
                         </td>
                         <td>
