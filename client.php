@@ -74,6 +74,9 @@ if (isset($_GET['competitors']) && $_GET['competitors'] !== '') {
     }
 }
 
+// No competitor filter (show articles that don't mention any competitor)
+$no_competitor = isset($_GET['no_competitor']) ? (bool)$_GET['no_competitor'] : false;
+
 // ---------------------------------------------------------------------------
 // Sentiment data (weighted by media tier: T1=3x, T2=2x, T3=1x, T4=0.5x)
 // ---------------------------------------------------------------------------
@@ -224,7 +227,18 @@ $g1_stmt->execute();
 $g1_articles = $g1_stmt->get_result();
 
 // --- Group 2: Industry/Competitor Articles (do NOT mention client name) ---
-$g2_where = "a.client_id = ? AND NOT (a.title LIKE ? OR COALESCE(a.content_text, '') LIKE ?)" . $tier_cond . $sentiment_cond . $date_cond;
+// Add competitor filter: if no_competitor is true, exclude articles mentioning any competitor
+$g2_competitor_cond = '';
+if ($no_competitor && !empty($competitors)) {
+    // Exclude articles that mention any competitor
+    $comp_exclusions = [];
+    foreach ($competitors as $comp) {
+        $comp_exclusions[] = "a.title NOT LIKE ? AND a.content_text NOT LIKE ?";
+    }
+    $g2_competitor_cond = ' AND (' . implode(' AND ', $comp_exclusions) . ')';
+}
+
+$g2_where = "a.client_id = ? AND NOT (a.title LIKE ? OR COALESCE(a.content_text, '') LIKE ?)" . $tier_cond . $sentiment_cond . $date_cond . $g2_competitor_cond;
 
 $g2_count_sql = "SELECT COUNT(*) AS cnt FROM articles a WHERE $g2_where";
 $g2_count_stmt = $db->prepare($g2_count_sql);
@@ -233,6 +247,14 @@ $g2_count_types = 'iss';
 if ($filter !== 'all') {
     $g2_count_params[] = $sentiment_param;
     $g2_count_types .= 's';
+}
+// Add competitor exclusion parameters
+if ($no_competitor && !empty($competitors)) {
+    foreach ($competitors as $comp) {
+        $g2_count_params[] = '%' . $comp . '%';
+        $g2_count_params[] = '%' . $comp . '%';
+        $g2_count_types .= 'ss';
+    }
 }
 $g2_count_params = array_merge($g2_count_params, $date_params);
 $g2_count_types .= $date_types;
@@ -248,6 +270,14 @@ $g2_types = 'iss';
 if ($filter !== 'all') {
     $g2_params[] = $sentiment_param;
     $g2_types .= 's';
+}
+// Add competitor exclusion parameters
+if ($no_competitor && !empty($competitors)) {
+    foreach ($competitors as $comp) {
+        $g2_params[] = '%' . $comp . '%';
+        $g2_params[] = '%' . $comp . '%';
+        $g2_types .= 'ss';
+    }
 }
 $g2_params = array_merge($g2_params, $date_params, [$per_page, $industry_offset]);
 $g2_types .= $date_types . 'ii';
@@ -648,8 +678,21 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
     </div>
     <?php endif; ?>
 
+    <!-- Competitor Filter (repeated for article list) -->
+    <?php if (!empty($competitors)): ?>
+    <div style="margin-top: 36px; margin-bottom: 12px;">
+        <div class="competitor-toggles">
+            <span class="competitor-label">Filter by:</span>
+            <?php foreach ($competitors as $comp): ?>
+                <button class="competitor-btn<?= in_array($comp, $active_competitors) ? ' active' : '' ?>" data-competitor="<?= htmlspecialchars(urlencode($comp)) ?>"><?= htmlspecialchars($comp) ?></button>
+            <?php endforeach; ?>
+            <button class="competitor-btn<?= $no_competitor ? ' active' : '' ?>" id="no-competitor-btn" style="margin-left: 8px;">No Competitor Mentioned</button>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <!-- Group 2: Industry / Competitor Articles -->
-    <div class="group-header" style="margin-top: 36px;">
+    <div class="group-header">
         <h3>Industry / Competitor Articles <span class="count">(<?= $g2_total ?>)</span></h3>
     </div>
     <div class="table-wrap">
@@ -859,9 +902,12 @@ document.querySelectorAll('.tier-btn').forEach(function(btn) {
 document.querySelectorAll('.competitor-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
         var competitor = this.getAttribute('data-competitor');
-        // Get current active competitors from buttons
+        // Ignore clicks on No Competitor button (handled separately)
+        if (!competitor) return;
+        
+        // Get current active competitors from buttons (exclude no-competitor btn)
         var active = [];
-        document.querySelectorAll('.competitor-btn.active').forEach(function(b) {
+        document.querySelectorAll('.competitor-btn[data-competitor].active').forEach(function(b) {
             active.push(b.getAttribute('data-competitor'));
         });
 
@@ -879,6 +925,8 @@ document.querySelectorAll('.competitor-btn').forEach(function(btn) {
         } else {
             params.set('competitors', active.join(','));
         }
+        // Remove no_competitor filter when selecting specific competitors
+        params.delete('no_competitor');
         // Reset pagination when competitors change
         params.delete('cp');
         params.delete('ip');
@@ -886,6 +934,30 @@ document.querySelectorAll('.competitor-btn').forEach(function(btn) {
         window.location.search = params.toString();
     });
 });
+
+// No Competitor Mentioned button handler
+var noCompBtn = document.getElementById('no-competitor-btn');
+if (noCompBtn) {
+    noCompBtn.addEventListener('click', function() {
+        var params = new URLSearchParams(window.location.search);
+        var isActive = noCompBtn.classList.contains('active');
+        
+        if (isActive) {
+            // Deactivate: remove no_competitor filter
+            params.delete('no_competitor');
+        } else {
+            // Activate: set no_competitor=1 and clear specific competitor selections
+            params.set('no_competitor', '1');
+            params.delete('competitors');
+        }
+        
+        // Reset pagination
+        params.delete('cp');
+        params.delete('ip');
+        
+        window.location.search = params.toString();
+    });
+}
 </script>
 
 </body>
