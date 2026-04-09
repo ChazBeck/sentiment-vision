@@ -67,7 +67,8 @@ $tier_cond = " AND a.media_tier IN ($tier_in)";
 // ---------------------------------------------------------------------------
 $active_competitors = []; // empty = all competitors
 if (isset($_GET['competitors']) && $_GET['competitors'] !== '') {
-    $raw_comps = array_map('trim', explode(',', urldecode($_GET['competitors'])));
+    // PHP already decodes query params, so keep values as-is for exact matching.
+    $raw_comps = array_map('trim', explode(',', $_GET['competitors']));
     $raw_comps = array_filter($raw_comps, fn($c) => !empty($c) && in_array($c, $competitors));
     if (!empty($raw_comps)) {
         $active_competitors = array_values(array_unique($raw_comps));
@@ -76,6 +77,10 @@ if (isset($_GET['competitors']) && $_GET['competitors'] !== '') {
 
 // No competitor filter (show articles that don't mention any competitor)
 $no_competitor = isset($_GET['no_competitor']) ? (bool)$_GET['no_competitor'] : false;
+if (!empty($active_competitors)) {
+    // Explicit competitor selection takes precedence.
+    $no_competitor = false;
+}
 
 // ---------------------------------------------------------------------------
 // Sentiment data (weighted by media tier: T1=3x, T2=2x, T3=1x, T4=0.5x)
@@ -566,7 +571,7 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
     <div class="competitor-toggles">
         <span class="competitor-label">Competitors:</span>
         <?php foreach ($competitors as $comp): ?>
-            <button class="competitor-btn<?= in_array($comp, $active_competitors) ? ' active' : '' ?>" data-competitor="<?= htmlspecialchars(urlencode($comp)) ?>"><?= htmlspecialchars($comp) ?></button>
+            <button class="competitor-btn<?= in_array($comp, $active_competitors) ? ' active' : '' ?>" data-competitor="<?= htmlspecialchars($comp, ENT_QUOTES) ?>"><?= htmlspecialchars($comp) ?></button>
         <?php endforeach; ?>
     </div>
     <?php endif; ?>
@@ -703,7 +708,7 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
         <div class="competitor-toggles">
             <span class="competitor-label">Filter by:</span>
             <?php foreach ($competitors as $comp): ?>
-                <button class="competitor-btn<?= in_array($comp, $active_competitors) ? ' active' : '' ?>" data-competitor="<?= htmlspecialchars(urlencode($comp)) ?>"><?= htmlspecialchars($comp) ?></button>
+                <button class="competitor-btn<?= in_array($comp, $active_competitors) ? ' active' : '' ?>" data-competitor="<?= htmlspecialchars($comp, ENT_QUOTES) ?>"><?= htmlspecialchars($comp) ?></button>
             <?php endforeach; ?>
             <button class="competitor-btn<?= $no_competitor ? ' active' : '' ?>" id="no-competitor-btn" style="margin-left: 8px;">No Competitor Mentioned</button>
         </div>
@@ -927,7 +932,10 @@ document.querySelectorAll('.competitor-btn').forEach(function(btn) {
         // Get current active competitors from buttons (exclude no-competitor btn)
         var active = [];
         document.querySelectorAll('.competitor-btn[data-competitor].active').forEach(function(b) {
-            active.push(b.getAttribute('data-competitor'));
+            var name = b.getAttribute('data-competitor');
+            if (name && active.indexOf(name) === -1) {
+                active.push(name);
+            }
         });
 
         var idx = active.indexOf(competitor);
