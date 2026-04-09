@@ -63,6 +63,18 @@ $tier_in = implode(',', $active_tiers);
 $tier_cond = " AND a.media_tier IN ($tier_in)";
 
 // ---------------------------------------------------------------------------
+// Competitor filter
+// ---------------------------------------------------------------------------
+$active_competitors = []; // empty = all competitors
+if (isset($_GET['competitors']) && $_GET['competitors'] !== '') {
+    $raw_comps = array_map('trim', explode(',', urldecode($_GET['competitors'])));
+    $raw_comps = array_filter($raw_comps, fn($c) => !empty($c) && in_array($c, $competitors));
+    if (!empty($raw_comps)) {
+        $active_competitors = array_values(array_unique($raw_comps));
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Sentiment data (weighted by media tier: T1=3x, T2=2x, T3=1x, T4=0.5x)
 // ---------------------------------------------------------------------------
 $tier_weight_sql = "CASE a.media_tier WHEN 1 THEN 3.0 WHEN 2 THEN 2.0 WHEN 3 THEN 1.0 WHEN 4 THEN 0.5 ELSE 1.0 END";
@@ -123,13 +135,14 @@ if (!empty($industries)) {
     $industry_sent = $ind_stmt->get_result()->fetch_assoc();
 }
 
-// 3) Competitor Sentiment — weighted avg of articles mentioning any competitor
+// 3) Competitor Sentiment — weighted avg of articles mentioning any competitor (or filtered competitors)
 $competitor_sent = ['avg_score' => null, 'total' => 0, 'scored' => 0, 'positive' => 0, 'negative' => 0, 'neutral' => 0];
 if (!empty($competitors)) {
+    $comp_list = !empty($active_competitors) ? $active_competitors : $competitors;
     $comp_conditions = [];
     $comp_params = [$client_id];
     $comp_types = 'i';
-    foreach ($competitors as $comp) {
+    foreach ($comp_list as $comp) {
         $comp_conditions[] = "a.title LIKE ? OR a.content_text LIKE ?";
         $comp_params[] = '%' . $comp . '%';
         $comp_params[] = '%' . $comp . '%';
@@ -408,9 +421,6 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
             <?php foreach ($industries as $ind): ?>
                 <span class="tag tag-blue"><?= htmlspecialchars($ind) ?></span>
             <?php endforeach; ?>
-            <?php foreach ($competitors as $comp): ?>
-                <span class="tag tag-amber"><?= htmlspecialchars($comp) ?></span>
-            <?php endforeach; ?>
         </div>
     </div>
 
@@ -498,6 +508,16 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
         <button class="tier-btn tier-3<?= in_array(3, $active_tiers) ? ' active' : '' ?>" data-tier="3">T3 Industry</button>
         <button class="tier-btn tier-4<?= in_array(4, $active_tiers) ? ' active' : '' ?>" data-tier="4">T4 Vendor</button>
     </div>
+
+    <?php if (!empty($competitors)): ?>
+    <!-- Competitor Filter Toggles -->
+    <div class="competitor-toggles">
+        <span class="competitor-label">Competitors:</span>
+        <?php foreach ($competitors as $comp): ?>
+            <button class="competitor-btn<?= in_array($comp, $active_competitors) ? ' active' : '' ?>" data-competitor="<?= htmlspecialchars(urlencode($comp)) ?>"><?= htmlspecialchars($comp) ?></button>
+        <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
 
     <!-- Sentiment Filter Tabs -->
     <div class="filter-tabs">
@@ -825,6 +845,38 @@ document.querySelectorAll('.tier-btn').forEach(function(btn) {
             params.set('tiers', active.join(','));
         }
         // Reset pagination when tiers change
+        params.delete('cp');
+        params.delete('ip');
+
+        window.location.search = params.toString();
+    });
+});
+
+// Competitor filter handling
+document.querySelectorAll('.competitor-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var competitor = this.getAttribute('data-competitor');
+        // Get current active competitors from buttons
+        var active = [];
+        document.querySelectorAll('.competitor-btn.active').forEach(function(b) {
+            active.push(b.getAttribute('data-competitor'));
+        });
+
+        var idx = active.indexOf(competitor);
+        if (idx !== -1) {
+            active.splice(idx, 1);
+        } else {
+            active.push(competitor);
+        }
+
+        // Build new URL preserving all other params
+        var params = new URLSearchParams(window.location.search);
+        if (active.length === 0) {
+            params.delete('competitors');
+        } else {
+            params.set('competitors', active.join(','));
+        }
+        // Reset pagination when competitors change
         params.delete('cp');
         params.delete('ip');
 

@@ -281,6 +281,53 @@ input[type=color] {
 .badge-yellow { background: #fff3cd; color: #856404; }
 
 /* ================================================================= */
+/* FILTER TOGGLES (Tier & Competitor)                                  */
+/* ================================================================= */
+.tier-toggles, .competitor-toggles {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    padding: 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+.tier-label, .competitor-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.tier-btn, .competitor-btn {
+    padding: 6px 14px;
+    background: var(--card-bg);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.tier-btn:hover, .competitor-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.tier-btn.active, .competitor-btn.active {
+    background: var(--primary-color);
+    color: var(--text-white);
+    border-color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* ================================================================= */
 /* SECTION DIVIDER                                                     */
 /* ================================================================= */
 .section-divider {
