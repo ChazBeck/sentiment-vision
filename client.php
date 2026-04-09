@@ -227,15 +227,22 @@ $g1_stmt->execute();
 $g1_articles = $g1_stmt->get_result();
 
 // --- Group 2: Industry/Competitor Articles (do NOT mention client name) ---
-// Add competitor filter: if no_competitor is true, exclude articles mentioning any competitor
+// Handle competitor filtering: if active_competitors selected, show only those; if no_competitor selected, exclude all
 $g2_competitor_cond = '';
-if ($no_competitor && !empty($competitors)) {
+if (!empty($active_competitors)) {
+    // Show articles that mention ANY of the selected competitors
+    $comp_conditions = [];
+    foreach ($active_competitors as $comp) {
+        $comp_conditions[] = "(a.title LIKE ? OR a.content_text LIKE ?)";
+    }
+    $g2_competitor_cond = ' AND (' . implode(' OR ', $comp_conditions) . ')';
+} elseif ($no_competitor && !empty($competitors)) {
     // Exclude articles that mention any competitor
     $comp_exclusions = [];
     foreach ($competitors as $comp) {
-        $comp_exclusions[] = "a.title NOT LIKE ? AND a.content_text NOT LIKE ?";
+        $comp_exclusions[] = "(a.title NOT LIKE ? AND a.content_text NOT LIKE ?)";
     }
-    $g2_competitor_cond = ' AND (' . implode(' AND ', $comp_exclusions) . ')';
+    $g2_competitor_cond = ' AND ' . implode(' AND ', $comp_exclusions);
 }
 
 $g2_where = "a.client_id = ? AND NOT (a.title LIKE ? OR COALESCE(a.content_text, '') LIKE ?)" . $tier_cond . $sentiment_cond . $date_cond . $g2_competitor_cond;
@@ -248,8 +255,14 @@ if ($filter !== 'all') {
     $g2_count_params[] = $sentiment_param;
     $g2_count_types .= 's';
 }
-// Add competitor exclusion parameters
-if ($no_competitor && !empty($competitors)) {
+// Add competitor parameters for filtering
+if (!empty($active_competitors)) {
+    foreach ($active_competitors as $comp) {
+        $g2_count_params[] = '%' . $comp . '%';
+        $g2_count_params[] = '%' . $comp . '%';
+        $g2_count_types .= 'ss';
+    }
+} elseif ($no_competitor && !empty($competitors)) {
     foreach ($competitors as $comp) {
         $g2_count_params[] = '%' . $comp . '%';
         $g2_count_params[] = '%' . $comp . '%';
@@ -271,8 +284,14 @@ if ($filter !== 'all') {
     $g2_params[] = $sentiment_param;
     $g2_types .= 's';
 }
-// Add competitor exclusion parameters
-if ($no_competitor && !empty($competitors)) {
+// Add competitor parameters for filtering
+if (!empty($active_competitors)) {
+    foreach ($active_competitors as $comp) {
+        $g2_params[] = '%' . $comp . '%';
+        $g2_params[] = '%' . $comp . '%';
+        $g2_types .= 'ss';
+    }
+} elseif ($no_competitor && !empty($competitors)) {
     foreach ($competitors as $comp) {
         $g2_params[] = '%' . $comp . '%';
         $g2_params[] = '%' . $comp . '%';
