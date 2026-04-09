@@ -302,7 +302,7 @@ input[type=color] {
     white-space: nowrap;
 }
 
-.tier-btn, .competitor-btn {
+.tier-btn {
     padding: 6px 14px;
     background: var(--card-bg);
     color: var(--text-secondary);
@@ -315,16 +315,44 @@ input[type=color] {
     white-space: nowrap;
 }
 
-.tier-btn:hover, .competitor-btn:hover {
+.tier-btn:hover {
     border-color: var(--primary-color);
     color: var(--primary-color);
 }
 
-.tier-btn.active, .competitor-btn.active {
+.tier-btn.active {
     background: var(--primary-color);
     color: var(--text-white);
     border-color: var(--primary-color);
     font-weight: 600;
+}
+
+/* Competitor buttons styled as pills */
+.competitor-btn {
+    padding: 5px 16px;
+    background: #f1f5f9;
+    color: #475569;
+    border: 2px solid #cbd5e1;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.competitor-btn:hover {
+    border-color: var(--primary-color);
+    background: rgba(229, 131, 37, 0.08);
+    color: var(--primary-color);
+}
+
+.competitor-btn.active {
+    background: var(--primary-color);
+    color: var(--text-white);
+    border-color: var(--primary-color);
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(229, 131, 37, 0.3);
 }
 
 /* ================================================================= */

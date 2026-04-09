@@ -421,6 +421,9 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
             <?php foreach ($industries as $ind): ?>
                 <span class="tag tag-blue"><?= htmlspecialchars($ind) ?></span>
             <?php endforeach; ?>
+            <?php foreach ($competitors as $comp): ?>
+                <span class="tag tag-amber"><?= htmlspecialchars($comp) ?></span>
+            <?php endforeach; ?>
         </div>
     </div>
 
