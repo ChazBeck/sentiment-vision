@@ -839,6 +839,22 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
 <footer>Sentiment Vision &middot; <?= htmlspecialchars($client['name']) ?></footer>
 
 <script>
+// Preserve scroll position across filter-triggered reloads.
+(function restoreScrollPosition() {
+    var savedY = sessionStorage.getItem('client_scroll_y');
+    if (savedY !== null) {
+        sessionStorage.removeItem('client_scroll_y');
+        window.requestAnimationFrame(function() {
+            window.scrollTo(0, parseInt(savedY, 10) || 0);
+        });
+    }
+})();
+
+function reloadWithScroll(params) {
+    sessionStorage.setItem('client_scroll_y', String(window.scrollY));
+    window.location.search = params.toString();
+}
+
 // Date filter handling
 document.getElementById('apply-dates').addEventListener('click', function() {
     var params = new URLSearchParams(window.location.search);
@@ -861,7 +877,7 @@ document.getElementById('apply-dates').addEventListener('click', function() {
     params.delete('cp');
     params.delete('ip');
     
-    window.location.search = params.toString();
+    reloadWithScroll(params);
 });
 
 document.getElementById('clear-dates').addEventListener('click', function() {
@@ -870,7 +886,7 @@ document.getElementById('clear-dates').addEventListener('click', function() {
     params.delete('end_date');
     params.delete('cp');
     params.delete('ip');
-    window.location.search = params.toString();
+    reloadWithScroll(params);
 });
 
 // Allow Enter key to apply dates
@@ -918,7 +934,7 @@ document.querySelectorAll('.tier-btn').forEach(function(btn) {
         params.delete('cp');
         params.delete('ip');
 
-        window.location.search = params.toString();
+        reloadWithScroll(params);
     });
 });
 
@@ -958,7 +974,7 @@ document.querySelectorAll('.competitor-btn').forEach(function(btn) {
         params.delete('cp');
         params.delete('ip');
 
-        window.location.search = params.toString();
+        reloadWithScroll(params);
     });
 });
 
@@ -982,7 +998,7 @@ if (noCompBtn) {
         params.delete('cp');
         params.delete('ip');
         
-        window.location.search = params.toString();
+        reloadWithScroll(params);
     });
 }
 </script>
