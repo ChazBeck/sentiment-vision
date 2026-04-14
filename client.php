@@ -389,7 +389,7 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
         font-size: 10px; font-weight: 600; color: #6c757d; margin-bottom: 16px;
         text-transform: uppercase; letter-spacing: 1.5px; font-family: 'Archivo', sans-serif;
     }
-    .gauge-wrap { width: 200px; height: 110px; margin: 0 auto 12px; position: relative; overflow: hidden; }
+    .gauge-wrap { width: 200px; height: 130px; margin: 0 auto 12px; position: relative; }
     .gauge-bg { fill: none; stroke: #e5e7eb; stroke-width: 18; stroke-linecap: round; }
     .gauge-fill { fill: none; stroke-width: 18; stroke-linecap: round; transition: stroke-dashoffset 1s ease, stroke 0.5s ease; }
     .gauge-needle { transition: transform 1s ease; transform-origin: 100px 100px; }
@@ -398,6 +398,13 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
     .gauge-detail { font-size: 12px; color: #6c757d; margin-top: 6px; }
     .gauge-breakdown { display: flex; justify-content: center; gap: 14px; margin-top: 10px; font-size: 12px; }
     .gauge-breakdown span { display: flex; align-items: center; gap: 4px; }
+    .gauge-export {
+        margin-top: 14px; padding: 5px 12px; font-size: 11px; font-weight: 600;
+        background: #fff; color: #6c757d; border: 1px solid #e5e7eb; border-radius: 4px;
+        cursor: pointer; font-family: 'Archivo', sans-serif;
+        text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.15s ease;
+    }
+    .gauge-export:hover { background: #E58325; color: #fff; border-color: #E58325; }
     .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
     .dot-green { background: #16a34a; }
     .dot-yellow { background: #eab308; }
@@ -496,10 +503,10 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
             $arc_len = 257.6;
             $fill_len = ($g['pct'] / 100) * $arc_len;
         ?>
-        <div class="gauge-card">
+        <div class="gauge-card" data-gauge-title="<?= htmlspecialchars($gc['title']) ?>">
             <h3><?= $gc['title'] ?></h3>
             <div class="gauge-wrap">
-                <svg viewBox="0 0 200 110" width="200" height="110">
+                <svg viewBox="0 -10 200 130" width="200" height="130">
                     <!-- Background arc -->
                     <path d="M 18 100 A 82 82 0 0 1 182 100"
                           class="gauge-bg" />
@@ -515,9 +522,9 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
                         <circle cx="100" cy="100" r="5" fill="#043546" />
                     </g>
                     <!-- Scale labels -->
-                    <text x="10" y="108" font-size="10" fill="#6c757d" text-anchor="start">-1</text>
-                    <text x="100" y="16" font-size="10" fill="#6c757d" text-anchor="middle">0</text>
-                    <text x="190" y="108" font-size="10" fill="#6c757d" text-anchor="end">+1</text>
+                    <text x="18" y="118" font-size="10" fill="#94a3b8" text-anchor="middle" font-family="Archivo, sans-serif">-1</text>
+                    <text x="100" y="8" font-size="10" fill="#94a3b8" text-anchor="middle" font-family="Archivo, sans-serif">0</text>
+                    <text x="182" y="118" font-size="10" fill="#94a3b8" text-anchor="middle" font-family="Archivo, sans-serif">+1</text>
                 </svg>
             </div>
             <div class="gauge-score" style="color: <?= $g['color'] ?>">
@@ -536,6 +543,7 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
                 <span><span class="dot dot-red"></span> <?= (int)$s['negative'] ?></span>
             </div>
             <?php endif; ?>
+            <button type="button" class="gauge-export" onclick="exportGauge(this)">Download PNG</button>
         </div>
         <?php endforeach; ?>
     </div>
@@ -999,6 +1007,43 @@ if (noCompBtn) {
         params.delete('ip');
         
         reloadWithScroll(params);
+    });
+}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script>
+function exportGauge(btn) {
+    const card = btn.closest('.gauge-card');
+    const clientName = <?= json_encode($client['name']) ?>;
+    const title = card.dataset.gaugeTitle || 'gauge';
+    const slug = (clientName + '-' + title)
+        .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+    btn.style.visibility = 'hidden';
+    const originalLabel = btn.textContent;
+    const originalBorderTop = card.style.borderTop;
+    const originalBoxShadow = card.style.boxShadow;
+    card.style.borderTop = 'none';
+    card.style.boxShadow = 'none';
+
+    const restore = () => {
+        btn.style.visibility = '';
+        card.style.borderTop = originalBorderTop;
+        card.style.boxShadow = originalBoxShadow;
+    };
+
+    html2canvas(card, { backgroundColor: '#ffffff', scale: 2, logging: false }).then(canvas => {
+        restore();
+        const link = document.createElement('a');
+        link.download = slug + '.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    }).catch(err => {
+        restore();
+        btn.textContent = 'Error';
+        setTimeout(() => { btn.textContent = originalLabel; }, 1500);
+        console.error(err);
     });
 }
 </script>
