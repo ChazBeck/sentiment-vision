@@ -389,7 +389,7 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
         font-size: 10px; font-weight: 600; color: #6c757d; margin-bottom: 16px;
         text-transform: uppercase; letter-spacing: 1.5px; font-family: 'Archivo', sans-serif;
     }
-    .gauge-wrap { width: 200px; height: 110px; margin: 0 auto 12px; position: relative; overflow: hidden; }
+    .gauge-wrap { width: 200px; height: 130px; margin: 0 auto 12px; position: relative; }
     .gauge-bg { fill: none; stroke: #e5e7eb; stroke-width: 18; stroke-linecap: round; }
     .gauge-fill { fill: none; stroke-width: 18; stroke-linecap: round; transition: stroke-dashoffset 1s ease, stroke 0.5s ease; }
     .gauge-needle { transition: transform 1s ease; transform-origin: 100px 100px; }
@@ -506,7 +506,7 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
         <div class="gauge-card" data-gauge-title="<?= htmlspecialchars($gc['title']) ?>">
             <h3><?= $gc['title'] ?></h3>
             <div class="gauge-wrap">
-                <svg viewBox="0 0 200 110" width="200" height="110">
+                <svg viewBox="0 -10 200 130" width="200" height="130">
                     <!-- Background arc -->
                     <path d="M 18 100 A 82 82 0 0 1 182 100"
                           class="gauge-bg" />
@@ -522,9 +522,9 @@ $g_competitor = gauge_data($competitor_sent['avg_score']);
                         <circle cx="100" cy="100" r="5" fill="#043546" />
                     </g>
                     <!-- Scale labels -->
-                    <text x="10" y="108" font-size="10" fill="#6c757d" text-anchor="start">-1</text>
-                    <text x="100" y="16" font-size="10" fill="#6c757d" text-anchor="middle">0</text>
-                    <text x="190" y="108" font-size="10" fill="#6c757d" text-anchor="end">+1</text>
+                    <text x="18" y="118" font-size="10" fill="#94a3b8" text-anchor="middle" font-family="Archivo, sans-serif">-1</text>
+                    <text x="100" y="8" font-size="10" fill="#94a3b8" text-anchor="middle" font-family="Archivo, sans-serif">0</text>
+                    <text x="182" y="118" font-size="10" fill="#94a3b8" text-anchor="middle" font-family="Archivo, sans-serif">+1</text>
                 </svg>
             </div>
             <div class="gauge-score" style="color: <?= $g['color'] ?>">
@@ -1022,15 +1022,25 @@ function exportGauge(btn) {
 
     btn.style.visibility = 'hidden';
     const originalLabel = btn.textContent;
+    const originalBorderTop = card.style.borderTop;
+    const originalBoxShadow = card.style.boxShadow;
+    card.style.borderTop = 'none';
+    card.style.boxShadow = 'none';
+
+    const restore = () => {
+        btn.style.visibility = '';
+        card.style.borderTop = originalBorderTop;
+        card.style.boxShadow = originalBoxShadow;
+    };
 
     html2canvas(card, { backgroundColor: '#ffffff', scale: 2, logging: false }).then(canvas => {
-        btn.style.visibility = '';
+        restore();
         const link = document.createElement('a');
         link.download = slug + '.png';
         link.href = canvas.toDataURL('image/png');
         link.click();
     }).catch(err => {
-        btn.style.visibility = '';
+        restore();
         btn.textContent = 'Error';
         setTimeout(() => { btn.textContent = originalLabel; }, 1500);
         console.error(err);
