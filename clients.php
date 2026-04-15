@@ -197,6 +197,22 @@ require_once __DIR__ . '/includes/db_connect.php';
 $db_ok = true;
 {
 
+    // Sync YAML -> DB so competitor pills / filters / search reflect edits immediately
+    // (Python's sync_clients runs on cron; this mirrors it for web edits.)
+    $sync_stmt = $db->prepare(
+        "INSERT INTO clients (name, industries, competitors) VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE industries = VALUES(industries), competitors = VALUES(competitors)"
+    );
+    foreach ($clients as $_c) {
+        $_name = $_c['name'] ?? '';
+        if ($_name === '') continue;
+        $_industries = json_encode($_c['industries'] ?? []);
+        $_competitors = json_encode($_c['competitors'] ?? []);
+        $sync_stmt->bind_param('sss', $_name, $_industries, $_competitors);
+        $sync_stmt->execute();
+    }
+    $sync_stmt->close();
+
     // Look up DB IDs for client "View" links
     $res = $db->query("SELECT id, name FROM clients");
     if ($res) {
@@ -272,6 +288,62 @@ $db_ok = true;
             $tag_message = "Tag toggled.";
             $tag_message_type = 'info';
         }
+    }
+
+    // Reset sentiment on competitor-mentioning AI-scored articles for this client
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'reset_competitor_scores') {
+        $rc_cid = (int)($_POST['client_id'] ?? 0);
+        $rc_comps = json_decode($_POST['competitors'] ?? '[]', true);
+        if ($rc_cid > 0 && is_array($rc_comps) && !empty($rc_comps)) {
+            $conds = [];
+            $params = [$rc_cid];
+            $types = 'i';
+            foreach ($rc_comps as $comp) {
+                $conds[] = "(title LIKE ? OR content_text LIKE ?)";
+                $params[] = '%' . $comp . '%';
+                $params[] = '%' . $comp . '%';
+                $types .= 'ss';
+            }
+            $sql = "UPDATE articles
+                    SET sentiment_score = NULL, sentiment_label = NULL,
+                        sentiment_rationale = NULL, sentiment_subject = NULL,
+                        analyzed_at = NULL
+                    WHERE client_id = ? AND score_method = 'ai'
+                      AND sentiment_score IS NOT NULL
+                      AND (" . implode(' OR ', $conds) . ")";
+            $stmt = $db->prepare($sql);
+            $stmt->bind_param($types, ...$params);
+            $stmt->execute();
+            $affected = $stmt->affected_rows;
+            $message = "Reset sentiment on $affected competitor-mentioning articles. They will be re-scored on the next analyzer run.";
+            $message_type = 'success';
+        } else {
+            $message = "Could not reset: no competitors configured or client not found.";
+            $message_type = 'error';
+        }
+    }
+
+    // Count competitor-mentioning AI-scored articles for this edit client
+    $competitor_scored_count = 0;
+    if ($edit_data && isset($client_db_ids[$edit_data['name']]) && !empty($edit_data['competitors'])) {
+        $cc_cid = $client_db_ids[$edit_data['name']];
+        $cc_conds = [];
+        $cc_params = [$cc_cid];
+        $cc_types = 'i';
+        foreach ($edit_data['competitors'] as $comp) {
+            $cc_conds[] = "(title LIKE ? OR content_text LIKE ?)";
+            $cc_params[] = '%' . $comp . '%';
+            $cc_params[] = '%' . $comp . '%';
+            $cc_types .= 'ss';
+        }
+        $cc_sql = "SELECT COUNT(*) AS cnt FROM articles
+                   WHERE client_id = ? AND score_method = 'ai'
+                     AND sentiment_score IS NOT NULL
+                     AND (" . implode(' OR ', $cc_conds) . ")";
+        $cc_stmt = $db->prepare($cc_sql);
+        $cc_stmt->bind_param($cc_types, ...$cc_params);
+        $cc_stmt->execute();
+        $competitor_scored_count = (int)$cc_stmt->get_result()->fetch_assoc()['cnt'];
     }
 
     // Load client-specific tags for the client being edited
@@ -566,6 +638,43 @@ $db_ok = true;
             <?php elseif ($edit_data): ?>
                 <p style="color: #6c757d; font-size: 13px; margin-top: 12px;">No client-specific tags yet. Add one above.</p>
             <?php endif; ?>
+        </div>
+        <?php endif; ?>
+
+        <?php if ($edit_data && $edit_cid > 0 && !empty($edit_data['competitors'])): ?>
+        <div class="tags-section">
+            <button type="button" class="btn btn-sm btn-outline" onclick="toggleAccordion('advanced-accordion')">
+                Advanced &#9662;
+            </button>
+            <div id="advanced-accordion" class="accordion-body">
+                <div style="margin-top: 16px; padding: 16px; border: 1px solid #fecaca; border-radius: 6px; background: #fef2f2;">
+                    <h3 style="font-size: 15px; color: #991b1b; margin-bottom: 6px;">
+                        &#9888; Re-score Competitor Articles
+                    </h3>
+                    <div class="hint" style="color: #7f1d1d;">
+                        This is a destructive action. It nulls sentiment on AI-scored articles
+                        that mention a competitor
+                        (<?= htmlspecialchars(implode(', ', $edit_data['competitors'])) ?>)
+                        so the analyzer re-scores them under the subject-aware prompt.
+                        Articles will be re-scored on the next cron run, at approximately
+                        $0.0002 per article in API costs.
+                    </div>
+                    <p style="font-size: 14px; color: #374151; margin: 12px 0;">
+                        <strong><?= number_format($competitor_scored_count) ?></strong>
+                        competitor-mentioning AI-scored article<?= $competitor_scored_count === 1 ? '' : 's' ?>
+                        currently have sentiment scores.
+                    </p>
+                    <form method="post" action="clients.php?edit=<?= $edit_index ?>"
+                          onsubmit="return confirm('Reset sentiment on <?= (int)$competitor_scored_count ?> competitor-mentioning articles for <?= htmlspecialchars(addslashes($edit_data['name'])) ?>?\n\nThey will be re-scored on the next analyzer run.');">
+                        <input type="hidden" name="action" value="reset_competitor_scores">
+                        <input type="hidden" name="client_id" value="<?= $edit_cid ?>">
+                        <input type="hidden" name="competitors" value="<?= htmlspecialchars(json_encode($edit_data['competitors'])) ?>">
+                        <button type="submit" class="btn btn-sm btn-danger" <?= $competitor_scored_count === 0 ? 'disabled' : '' ?>>
+                            Reset &amp; Re-score Competitor Articles
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
         <?php endif; ?>
 

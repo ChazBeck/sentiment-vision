@@ -100,6 +100,7 @@ $company_sql = "
     WHERE a.client_id = ?
       AND a.sentiment_score IS NOT NULL
       AND (a.title LIKE ? OR a.content_text LIKE ?)
+      AND (a.sentiment_subject IS NULL OR a.sentiment_subject = 'client')
       AND a.media_tier IN ($tier_in)
       $date_cond
 ";
@@ -132,6 +133,7 @@ if (!empty($industries)) {
                SUM(CASE WHEN sentiment_label = 'neutral' THEN 1 ELSE 0 END) AS neutral
         FROM articles a
         WHERE a.client_id = ? AND a.sentiment_score IS NOT NULL AND $industry_where
+              AND (a.sentiment_subject IS NULL OR a.sentiment_subject = 'industry')
               AND a.media_tier IN ($tier_in)
               $date_cond
     ";
@@ -166,6 +168,7 @@ if (!empty($competitors)) {
                SUM(CASE WHEN sentiment_label = 'neutral' THEN 1 ELSE 0 END) AS neutral
         FROM articles a
         WHERE a.client_id = ? AND a.sentiment_score IS NOT NULL AND $comp_where
+              AND (a.sentiment_subject IS NULL OR a.sentiment_subject = 'competitor')
               AND a.media_tier IN ($tier_in)
               $date_cond
     ";

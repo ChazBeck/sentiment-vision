@@ -38,13 +38,17 @@ if (!$article_detail) {
                (SELECT SUM(a.sentiment_score * CASE a.media_tier WHEN 1 THEN 3.0 WHEN 2 THEN 2.0 WHEN 3 THEN 1.0 WHEN 4 THEN 0.5 ELSE 1.0 END)
                      / SUM(CASE a.media_tier WHEN 1 THEN 3.0 WHEN 2 THEN 2.0 WHEN 3 THEN 1.0 WHEN 4 THEN 0.5 ELSE 1.0 END)
                 FROM articles a WHERE a.client_id = c.id AND a.sentiment_score IS NOT NULL
-                   AND (a.title LIKE CONCAT('%', c.name, '%') OR COALESCE(a.content_text, '') LIKE CONCAT('%', c.name, '%'))) AS avg_sentiment,
+                   AND (a.title LIKE CONCAT('%', c.name, '%') OR COALESCE(a.content_text, '') LIKE CONCAT('%', c.name, '%'))
+                   AND (a.sentiment_subject IS NULL OR a.sentiment_subject = 'client')) AS avg_sentiment,
                (SELECT SUM(CASE WHEN a.sentiment_label = 'positive' THEN 1 ELSE 0 END) FROM articles a WHERE a.client_id = c.id
-                   AND (a.title LIKE CONCAT('%', c.name, '%') OR COALESCE(a.content_text, '') LIKE CONCAT('%', c.name, '%'))) AS positive,
+                   AND (a.title LIKE CONCAT('%', c.name, '%') OR COALESCE(a.content_text, '') LIKE CONCAT('%', c.name, '%'))
+                   AND (a.sentiment_subject IS NULL OR a.sentiment_subject = 'client')) AS positive,
                (SELECT SUM(CASE WHEN a.sentiment_label = 'neutral' THEN 1 ELSE 0 END) FROM articles a WHERE a.client_id = c.id
-                   AND (a.title LIKE CONCAT('%', c.name, '%') OR COALESCE(a.content_text, '') LIKE CONCAT('%', c.name, '%'))) AS neutral_count,
+                   AND (a.title LIKE CONCAT('%', c.name, '%') OR COALESCE(a.content_text, '') LIKE CONCAT('%', c.name, '%'))
+                   AND (a.sentiment_subject IS NULL OR a.sentiment_subject = 'client')) AS neutral_count,
                (SELECT SUM(CASE WHEN a.sentiment_label = 'negative' THEN 1 ELSE 0 END) FROM articles a WHERE a.client_id = c.id
-                   AND (a.title LIKE CONCAT('%', c.name, '%') OR COALESCE(a.content_text, '') LIKE CONCAT('%', c.name, '%'))) AS negative
+                   AND (a.title LIKE CONCAT('%', c.name, '%') OR COALESCE(a.content_text, '') LIKE CONCAT('%', c.name, '%'))
+                   AND (a.sentiment_subject IS NULL OR a.sentiment_subject = 'client')) AS negative
         FROM clients c
         ORDER BY c.name
     ");
