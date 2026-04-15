@@ -25,3 +25,6 @@ Thumbs.db
 
 # Backups
 backup/
+
+# Runtime-mutable config (edited via clients.php UI per environment)
+config/clients.yaml
