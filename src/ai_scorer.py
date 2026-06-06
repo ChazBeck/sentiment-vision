@@ -28,32 +28,53 @@ You will be given:
 - A news article
 
 Your job:
-1. Identify who or what the article is ACTUALLY about (it may be about the client, \
-a competitor, the broader industry, or an unrelated entity).
-2. Score the article's sentiment impact on the CLIENT COMPANY on a scale of -1.0 to 1.0.
+1. Identify the SUBJECT — who or what the article is primarily about. Choose one:
+   - "client"     — the article is primarily about the client company
+   - "competitor" — the article is primarily about a named competitor
+   - "industry"   — the article is about the broader industry or market trends
+   - "unrelated"  — the article does not meaningfully involve the client, a competitor, \
+or the industry
+2. Score the article's sentiment FROM THE PERSPECTIVE OF THE SUBJECT on a scale of \
+-1.0 to 1.0. Score as if you were analyzing the article for that subject's own PR team.
+   - If subject is "client": is this good or bad news for the client?
+   - If subject is "competitor": is this good or bad news for that competitor? \
+(Do NOT invert it for the client. A competitor winning a contract is positive \
+sentiment for the competitor — not negative for the client.)
+   - If subject is "industry": is the industry trend positive or negative overall?
+   - If subject is "unrelated": score 0.0.
 
-IMPORTANT: Do NOT assume the article is about the client. Many articles will be about \
-competitors or industry trends. Your rationale must accurately state who the article \
-is about.
+IMPORTANT rules:
+- Do NOT assume the article is about the client.
+- Do NOT score competitor activity as negative for the client just because a \
+competitor is growing, expanding, winning deals, or doing well. Competitor articles \
+are scored on the competitor's own sentiment. Only mark sentiment negative when the \
+article describes DIRECT harm to the client (named lawsuits, lost clients, regulatory \
+action against the client, operational failures at the client, etc.).
+- Purely factual competitive capacity growth, expansions, or partnerships involving \
+a competitor should be scored as positive sentiment for that competitor, not negative \
+for the client.
 
-Respond with ONLY a JSON object: {"score": <float>, "rationale": "<one sentence>"}
+Respond with ONLY a JSON object: \
+{"subject": "<client|competitor|industry|unrelated>", "score": <float>, \
+"rationale": "<one sentence>"}
 
-Scoring guide:
-- Positive (0.3 to 1.0): Directly benefits the client — favorable coverage, growth, \
-wins, partnerships.
-- Mild positive (0.1 to 0.3): Indirectly positive — industry tailwinds, competitor \
-struggles that may benefit client.
-- Neutral (-0.1 to 0.1): No clear impact on the client, or purely factual industry \
-reporting.
-- Mild negative (-0.3 to -0.1): Indirectly negative — industry headwinds, regulatory \
-trends that could affect client.
-- Negative (-1.0 to -0.3): Directly harms the client — negative coverage, regulatory \
-threats, lawsuits, opposition, operational failures.
+Scoring guide (applied to the identified subject):
+- Positive (0.3 to 1.0): Favorable coverage — growth, wins, partnerships, expansions, \
+awards, strong financials.
+- Mild positive (0.1 to 0.3): Mildly favorable — incremental progress, minor wins, \
+positive industry trends.
+- Neutral (-0.1 to 0.1): Purely factual reporting with no clear positive or negative \
+valence.
+- Mild negative (-0.3 to -0.1): Mildly unfavorable — minor setbacks, cautious outlooks.
+- Negative (-1.0 to -0.3): Unfavorable coverage — lawsuits, regulatory actions, \
+layoffs, operational failures, scandals.
 
 Rationale examples:
-- "CyrusOne downsizing Yorkville project could reduce competition for Cologix."
-- "New EPA water-usage rules pose compliance risk for Cologix."
-- "Cologix partnership with AWS signals growth and market confidence.\""""
+- subject=client: "Cologix partnership with AWS signals growth and market confidence."
+- subject=competitor: "QTS Realty's Wilmer expansion represents capacity growth for QTS."
+- subject=industry: "New EPA water-usage rules pose compliance risk across the data \
+center industry."
+- subject=unrelated: "Article covers a political event with no industry relevance.\""""
 
 
 def _get_client():
@@ -97,7 +118,11 @@ def _parse_ai_response(response_text: str, settings: dict):
         if rationale:
             logger.debug(f"  AI rationale: {rationale}")
 
-        return (round(score, 4), label, rationale)
+        subject = data.get("subject", "")
+        if subject not in ("client", "competitor", "industry", "unrelated"):
+            subject = ""
+
+        return (round(score, 4), label, rationale, subject)
     except (json.JSONDecodeError, KeyError, ValueError, TypeError) as e:
         logger.warning(
             f"Failed to parse AI response: {e} | Raw: {response_text[:200]}"
@@ -179,15 +204,17 @@ def score_with_ai(
         if parsed is None:
             return None
 
-        score, label, rationale = parsed
+        score, label, rationale, subject = parsed
         logger.debug(
             f"  AI scored article {article_row.get('id')}: {score} ({label}) "
+            f"subject={subject or 'n/a'} "
             f"[{input_tokens}+{output_tokens} tokens, ${est_cost:.5f}]"
         )
         return {
             "sentiment_score": score,
             "sentiment_label": label,
             "sentiment_rationale": rationale,
+            "sentiment_subject": subject,
             "score_method": "ai",
         }
 
